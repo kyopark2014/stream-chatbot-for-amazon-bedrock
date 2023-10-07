@@ -10,6 +10,7 @@ import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as apiGateway from 'aws-cdk-lib/aws-apigateway';
 import * as s3Deploy from "aws-cdk-lib/aws-s3-deployment";
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2';
 
 const region = process.env.CDK_DEFAULT_REGION;    
 const debug = false;
@@ -386,5 +387,137 @@ export class CdkStreamChatbotStack extends cdk.Stack {
       allowedMethods: cloudFront.AllowedMethods.ALLOW_ALL,  
       viewerProtocolPolicy: cloudFront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
     });
+
+    // stream api gateway
+    // API Gateway
+    const websocketapi = new apigatewayv2.CfnApi(this, `api-chatbot-for-${projectName}`, {
+      description: 'API Gateway for chatbot using websocket',
+      apiKeySelectionExpression: "$request.header.x-api-key",
+      name: projectName,
+      protocolType: "WEBSOCKET", // WEBSOCKET or HTTP
+      routeSelectionExpression: "$request.body.action",     
+    });  
+    websocketapi.applyRemovalPolicy(cdk.RemovalPolicy.DESTROY); // DESTROY, RETAIN
+
+    new cdk.CfnOutput(this, 'api-identifier', {
+      value: websocketapi.attrApiId,
+      description: 'The API identifier.',
+    });
+
+    const wss_url = `wss://${websocketapi.attrApiId}.execute-api.${region}.amazonaws.com/${stage}`;
+    new cdk.CfnOutput(this, 'web-socket-url', {
+      value: wss_url,
+      
+      description: 'The URL of Web Socket',
+    });
+
+    const connection_url = `https://${websocketapi.attrApiId}.execute-api.${region}.amazonaws.com/${stage}`;
+    new cdk.CfnOutput(this, 'connection-url', {
+      value: connection_url,
+      
+      description: 'The URL of connection',
+    });
+
+    const roleWebLambda = new iam.Role(this, `role-lambda-webchat-for-${projectName}`, {
+      roleName: `role-lambda-webchat-for-${projectName}-${region}`,
+      assumedBy: new iam.CompositePrincipal(
+        new iam.ServicePrincipal("lambda.amazonaws.com")
+      )
+    });
+    roleWebLambda.addManagedPolicy({
+      managedPolicyArn: 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole',
+    });
+    
+    const apiInvokePolicy = new iam.PolicyStatement({ 
+      resources: ['arn:aws:execute-api:*:*:*'],
+      actions: [
+        'execute-api:Invoke',
+        'execute-api:ManageConnections'
+      ],
+    });        
+    roleWebLambda.attachInlinePolicy( 
+      new iam.Policy(this, `api-invoke-policy-for-${projectName}`, {
+        statements: [apiInvokePolicy],
+      }),
+    );  
+
+    // Lambda - webchat
+    const functionName = `lambda-webchat-for-${projectName}`;
+
+    const lambdaWebchat = new lambda.Function(this, `lambda-webchat-for-${projectName}`, {
+      runtime: lambda.Runtime.NODEJS_16_X, 
+      functionName: functionName,
+      code: lambda.Code.fromAsset("../lambda-webchat"), 
+      handler: "index.handler", 
+      timeout: cdk.Duration.seconds(10),
+      logRetention: logs.RetentionDays.ONE_DAY,
+      role: roleLambda,
+      environment: {
+        connection_url: connection_url
+      }      
+    });
+    lambdaWebchat.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));  
+
+    new cdk.CfnOutput(this, 'function-webchat-arn', {
+      value: lambdaWebchat.functionArn,
+      description: 'The arn of lambda webchat.',
+    });
+    
+    const integrationUri = `arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambdaWebchat.functionArn}/invocations`;    
+    const cfnIntegration = new apigatewayv2.CfnIntegration(this, `api-integration-for-${projectName}`, {
+      apiId: websocketapi.attrApiId,
+      integrationType: 'AWS_PROXY',
+      credentialsArn: role.roleArn,
+      connectionType: 'INTERNET',
+      description: 'Integration for connect',
+      integrationUri: integrationUri,
+    });  
+
+    new apigatewayv2.CfnRoute(this, `api-route-for-${projectName}-connect`, {
+      apiId: websocketapi.attrApiId,
+      routeKey: "$connect", 
+      apiKeyRequired: false,
+      authorizationType: "NONE",
+      operationName: 'connect',
+      target: `integrations/${cfnIntegration.ref}`,      
+    }); 
+
+    new apigatewayv2.CfnRoute(this, `api-route-for-${projectName}-disconnect`, {
+      apiId: websocketapi.attrApiId,
+      routeKey: "$disconnect", 
+      apiKeyRequired: false,
+      authorizationType: "NONE",
+      operationName: 'disconnect',
+      target: `integrations/${cfnIntegration.ref}`,      
+    }); 
+
+    new apigatewayv2.CfnRoute(this, `api-route-for-${projectName}-default`, {
+      apiId: websocketapi.attrApiId,
+      routeKey: "$default", 
+      apiKeyRequired: false,
+      authorizationType: "NONE",
+      operationName: 'default',
+      target: `integrations/${cfnIntegration.ref}`,      
+    }); 
+
+    new apigatewayv2.CfnStage(this, `api-stage-for-${projectName}`, {
+      apiId: websocketapi.attrApiId,
+      stageName: stage
+    }); 
+
+    // deploy components
+    new componentDeployment(scope, "deployments", websocketapi.attrApiId)  
   }
 }
+
+export class componentDeployment extends cdk.Stack {
+  constructor(scope: Construct, id: string, appId: string, props?: cdk.StackProps) {    
+    super(scope, id, props);
+
+    new apigatewayv2.CfnDeployment(this, `api-deployment-for-${projectName}`, {
+      apiId: appId,
+      description: "deploy api gateway using websocker",  // $default
+      stageName: stage
+    });   
+  }
+} 
