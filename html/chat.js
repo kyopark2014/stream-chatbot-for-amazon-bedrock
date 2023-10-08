@@ -16,6 +16,18 @@ function sendMessage(message) {
     console.log('message: ', message);    
 }
 
+let tm
+function ping() {
+    console.log('ping!');
+    webSocket.send('__ping__');
+    tm = setTimeout(function () {
+       /// ---connection closed ///
+    }, 5000);
+}
+function pong() {
+    clearTimeout(tm);
+}
+
 function connect(endpoint) {
     const ws = new WebSocket(endpoint);
 
@@ -23,11 +35,17 @@ function connect(endpoint) {
     ws.onopen = function () {
         console.log('connected...!');
         isConnected = true;
+
+        setInterval(ping, 30000);
     };
 
     // message 
     ws.onmessage = function (event) {
         console.log('received message: ', event.data);
+        if (event.data == '__pong__') {
+            pong();
+            return;
+        }
 
         result = JSON.parse(event.data)
         addReceivedMessage(result.msg);
@@ -37,11 +55,17 @@ function connect(endpoint) {
     ws.onclose = function () {
         console.log('disconnected...!');
         isConnected = false;
+
+        ws.close();
+        console.log('the session will be closed');
     };
 
     // error
     ws.onerror = function (error) {
         console.log(error);
+
+        ws.close();
+        console.log('the session will be closed');
     };
 
     return ws;
