@@ -465,11 +465,11 @@ export class CdkStreamChatbotStack extends cdk.Stack {
       code: lambda.Code.fromAsset(path.join(__dirname, '../../lambda-chat-ws')),
       timeout: cdk.Duration.seconds(120),
       logRetention: logs.RetentionDays.ONE_DAY,
+      role: roleWebLambda,
       environment: {
         connection_url: connection_url
       }
     });
-
     lambdaChatWebsocket.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));  
 
     new cdk.CfnOutput(this, 'function-webchat-arn', {
