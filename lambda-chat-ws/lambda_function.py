@@ -349,8 +349,17 @@ def getResponse(reqBody):
                         msg = llm(PROMPT.format(input=text))
                     else:    
                         conversation.prompt = get_prompt_template(text, convType)
-                        stream = conversation.predict(input=text)
+                        output = conversation.predict(input=text)
 
+                        print('output: ', json.dumps(output))
+                        stream = output.get('body')
+
+                        if stream:
+                            for event in stream:
+                                chunk=event.get('chunk')
+                                if chunk:
+                                    print(json.loads(chunk.get('bytes').decode))
+                        """
                         i = 1
                         output = []
                         if stream:
@@ -363,6 +372,7 @@ def getResponse(reqBody):
                                     output.append(text)
                                     print(f'\t\t\x1b[31m**Chunk {i}**\x1b[0m\n{text}\n')
                                     i+=1
+                        """
                         msg = "stream out"
 
 
