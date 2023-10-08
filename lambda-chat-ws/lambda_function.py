@@ -351,13 +351,17 @@ def getResponse(reqBody):
                         conversation.prompt = get_prompt_template(text, convType)
                         stream = conversation.predict(input=text)
 
+                        output = ""
                         if stream:
                             for event in stream:
-                                print('event: ', json.dumps(event))
-
                                 chunk=event.get('chunk')
                                 if chunk:
-                                    print(json.loads(chunk.get('bytes').decode))
+                                    c = json.loads(chunk.get('bytes').decode("utf-8"))
+                                    if c:
+                                        output = output + c.get('completion')
+                                print('output: ', output)
+                        print(output)
+                                    #print(json.loads(chunk.get('bytes').decode))
                         """
                         i = 1
                         output = []
