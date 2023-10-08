@@ -418,16 +418,28 @@ export class CdkStreamChatbotStack extends cdk.Stack {
       description: 'The URL of connection',
     });
 
-    const roleWebLambda = new iam.Role(this, `role-lambda-webchat-for-${projectName}`, {
-      roleName: `role-lambda-webchat-for-${projectName}-${region}`,
+    
+    
+
+    // Lambda - chat (websocket)
+    const functionName = `lambda-chat-ws-for-${projectName}`;
+
+    const roleLambdaWebsocket = new iam.Role(this, `role-lambda-chat-for-${projectName}`, {
+      roleName: `role-lambda-chat-for-${projectName}-${region}`,
       assumedBy: new iam.CompositePrincipal(
-        new iam.ServicePrincipal("lambda.amazonaws.com")
+        new iam.ServicePrincipal("lambda.amazonaws.com"),
+        new iam.ServicePrincipal("bedrock.amazonaws.com"),
       )
     });
-    roleWebLambda.addManagedPolicy({
+    roleLambdaWebsocket.addManagedPolicy({
       managedPolicyArn: 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole',
     });
-    
+    roleLambdaWebsocket.attachInlinePolicy( // add bedrock policy
+      new iam.Policy(this, `bedrock-policy-lambda-chat-for-${projectName}`, {
+        statements: [BedrockPolicy],
+      }),
+    );        
+
     const apiInvokePolicy = new iam.PolicyStatement({ 
       resources: ['arn:aws:execute-api:*:*:*'],
       actions: [
@@ -435,14 +447,11 @@ export class CdkStreamChatbotStack extends cdk.Stack {
         'execute-api:ManageConnections'
       ],
     });        
-    roleWebLambda.attachInlinePolicy( 
+    roleLambdaWebsocket.attachInlinePolicy( 
       new iam.Policy(this, `api-invoke-policy-for-${projectName}`, {
         statements: [apiInvokePolicy],
       }),
     );  
-
-    // Lambda - chat (websocket)
-    const functionName = `lambda-chat-ws-for-${projectName}`;
 
   /*  const lambdaChatWebsocket = new lambda.Function(this, `lambda-chat-ws-for-${projectName}`, {
       description: 'lambda for chat using websocket',
@@ -464,7 +473,7 @@ export class CdkStreamChatbotStack extends cdk.Stack {
       functionName: `lambda-chat-ws-for-${projectName}`,
       code: lambda.DockerImageCode.fromImageAsset(path.join(__dirname, '../../lambda-chat-ws')),
       timeout: cdk.Duration.seconds(300),
-      role: roleLambda,
+      role: roleLambdaWebsocket,
       environment: {
         bedrock_region: bedrock_region,
         model_id: model_id,
