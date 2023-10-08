@@ -444,7 +444,7 @@ export class CdkStreamChatbotStack extends cdk.Stack {
     // Lambda - chat (websocket)
     const functionName = `lambda-chat-ws-for-${projectName}`;
 
-    const lambdaChatWebsocket = new lambda.Function(this, `lambda-chat-ws-for-${projectName}`, {
+  /*  const lambdaChatWebsocket = new lambda.Function(this, `lambda-chat-ws-for-${projectName}`, {
       description: 'lambda for chat using websocket',
       functionName: functionName,
       handler: 'lambda_function.lambda_handler',
@@ -457,8 +457,27 @@ export class CdkStreamChatbotStack extends cdk.Stack {
         connection_url: connection_url
       }
     });
+    lambdaChatWebsocket.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));  */
+    
+    const lambdaChatWebsocket = new lambda.DockerImageFunction(this, `lambda-chat-ws-for-${projectName}`, {
+      description: 'lambda for chat using websocket',
+      functionName: `lambda-chat-ws-for-${projectName}`,
+      code: lambda.DockerImageCode.fromImageAsset(path.join(__dirname, '../../lambda-chat-ws')),
+      timeout: cdk.Duration.seconds(300),
+      role: roleLambda,
+      environment: {
+        bedrock_region: bedrock_region,
+        model_id: model_id,
+        s3_bucket: s3Bucket.bucketName,
+        s3_prefix: s3_prefix,
+        callLogTableName: callLogTableName,
+        conversationMode: conversationMode
+      }
+    });     
     lambdaChatWebsocket.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));  
-
+    s3Bucket.grantRead(lambdaChatWebsocket); // permission for s3
+    callLogDataTable.grantReadWriteData(lambdaChatWebsocket); // permission for dynamo
+    
     new cdk.CfnOutput(this, 'function-webchat-arn', {
       value: lambdaChatWebsocket.functionArn,
       description: 'The arn of lambda webchat.',
