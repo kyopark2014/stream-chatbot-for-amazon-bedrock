@@ -393,7 +393,7 @@ export class CdkStreamChatbotStack extends cdk.Stack {
     const websocketapi = new apigatewayv2.CfnApi(this, `ws-api-for-${projectName}`, {
       description: 'API Gateway for chatbot using websocket',
       apiKeySelectionExpression: "$request.header.x-api-key",
-      name: projectName,
+      name: 'api-'+projectName,
       protocolType: "WEBSOCKET", // WEBSOCKET or HTTP
       routeSelectionExpression: "$request.body.action",     
     });  
@@ -458,7 +458,7 @@ export class CdkStreamChatbotStack extends cdk.Stack {
       }
     });
     lambdaChatWebsocket.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));  */
-    
+
     const lambdaChatWebsocket = new lambda.DockerImageFunction(this, `lambda-chat-ws-for-${projectName}`, {
       description: 'lambda for chat using websocket',
       functionName: `lambda-chat-ws-for-${projectName}`,
