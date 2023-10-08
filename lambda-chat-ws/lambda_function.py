@@ -399,29 +399,29 @@ def lambda_handler(event, context):
         routeKey = event['requestContext']['routeKey']
         print('routeKey: ', routeKey)
         
-    if routeKey == '$connect':
-        print('connected!')
-    elif routeKey == '$disconnect':
-        print('disconnected!')
-    else:
-        reqBody = json.loads(event['body'])
-        print('reqBody: ', reqBody)
-        
-        msg = getResponse(reqBody)
+        if routeKey == '$connect':
+            print('connected!')
+        elif routeKey == '$disconnect':
+            print('disconnected!')
+        else:
+            reqBody = json.loads(event['body'])
+            print('reqBody: ', reqBody)
+            
+            msg = getResponse(reqBody)
 
-        userId  = reqBody['user_id']
-        requestId  = reqBody['request_id']
-        requestTime  = reqBody['request_time']
-        type  = reqBody['type']
-        result = {
-            'user_id': userId, 
-            'request_id': requestId,
-            'request_time': requestTime,
-            'type': type,
-            'msg': msg
-        }
-        print('result: ', json.dumps(result))
-        sendMessage(connectionId, result)
+            userId  = reqBody['user_id']
+            requestId  = reqBody['request_id']
+            requestTime  = reqBody['request_time']
+            type  = reqBody['type']
+            result = {
+                'user_id': userId, 
+                'request_id': requestId,
+                'request_time': requestTime,
+                'type': type,
+                'msg': msg
+            }
+            print('result: ', json.dumps(result))
+            sendMessage(connectionId, result)
 
     return {
         'statusCode': 200,

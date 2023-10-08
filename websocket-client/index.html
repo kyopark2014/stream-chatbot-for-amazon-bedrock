@@ -11,7 +11,8 @@
     const dest_cf = "wss://d2tl9ytaw56jqq.cloudfront.net/ws";
     const dest_origin = "wss://vdwyxxbir1.execute-api.ap-northeast-2.amazonaws.com/ws"
 
-    dest = dest_api_gw;
+    let isConnected = false;
+    let dest = dest_api_gw;
     console.log('dest: ', dest);
     const webSocket = new WebSocket(dest);
 
@@ -19,18 +20,20 @@
     webSocket.onopen = function () {
         console.log('connected...!')
         // alert("Successfully connected");
+        isConnected = true;
     };
 
     // message 
     webSocket.onmessage = function (event) {
         console.log('received message: ', event.data);
-        // alert(event.data);
+        // alert(event.data);        
     };
 
     // disconnect
     webSocket.onclose = function () {
         console.log('disconnected...!');
         // alert("the connection was closed");
+        isConnected = false;
     };
 
     // error
@@ -39,10 +42,12 @@
     };
 
     function sendMessage() {
+      if(isConnected) {
         const message = document.getElementById("message").value;
         webSocket.send(message);
          
         console.log('message: ', message);
+      }
     }
   </script>
   <body>
