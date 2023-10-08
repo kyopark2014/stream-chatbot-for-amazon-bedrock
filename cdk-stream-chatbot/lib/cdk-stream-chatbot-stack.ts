@@ -452,10 +452,10 @@ export class CdkStreamChatbotStack extends cdk.Stack {
       }),
     );  
 
-  /*  const functionName = `lambda-websocket-for-${projectName}`;
+  /*  
       const lambdaChatWebsocket = new lambda.Function(this, `lambda-websocket-for-${projectName}`, {
       description: 'lambda for websocket in order to test the connection of websocket ',
-      functionName: functionName,
+      functionName: `lambda-websocket-for-${projectName}`,
       handler: 'lambda_function.lambda_handler',
       runtime: lambda.Runtime.PYTHON_3_11,
       code: lambda.Code.fromAsset(path.join(__dirname, '../../lambda-websocket')),
