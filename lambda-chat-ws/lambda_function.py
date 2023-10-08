@@ -391,7 +391,7 @@ def getResponse(reqBody):
     return msg
 
 def lambda_handler(event, context):
-    print(event)
+    print('event: ', event)
     
     if event['requestContext']: 
         connectionId = event['requestContext']['connectionId']
@@ -407,22 +407,33 @@ def lambda_handler(event, context):
             print('routeKey: ', routeKey)
             reqBody = json.loads(event['body'])
             print('reqBody: ', reqBody)
-            
-            msg = getResponse(reqBody)
 
-            userId  = reqBody['user_id']
-            requestId  = reqBody['request_id']
-            requestTime  = reqBody['request_time']
-            type  = reqBody['type']
-            result = {
-                'user_id': userId, 
-                'request_id': requestId,
-                'request_time': requestTime,
-                'type': type,
-                'msg': msg
-            }
-            print('result: ', json.dumps(result))
-            sendMessage(connectionId, result)
+            body = json.loads(event['body'])
+            print('body: ', body)
+            msgId = body['msgId']
+
+            msg = {'msgId': msgId, 'msg': 'First: Great!'}
+            sendMessage(connectionId, msg)
+            msg = {'msgId': msgId, 'msg': "Second: What a great day!!"}
+            sendMessage(connectionId, msg)
+
+            
+            
+            #msg = getResponse(reqBody)
+
+            #userId  = reqBody['user_id']
+            #requestId  = reqBody['request_id']
+            #requestTime  = reqBody['request_time']
+            #type  = reqBody['type']
+            #result = {
+            #    'user_id': userId, 
+            #    'request_id': requestId,
+            #    'request_time': requestTime,
+            #    'type': type,
+            #    'msg': msg
+            #}
+            #print('result: ', json.dumps(result))
+            #sendMessage(connectionId, result)
 
     return {
         'statusCode': 200,
