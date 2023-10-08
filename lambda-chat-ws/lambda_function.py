@@ -355,13 +355,13 @@ def getResponse(reqBody):
                         output = ""
                         if stream:
                             for event in stream:
-                                chunk=event.get('chunk')
+                                #chunk=event.get('chunk')
                                 #if chunk:
                                 #    c = json.loads(chunk.get('bytes').decode("utf-8"))
                                 #    if c:
                                 #        output = output + c.get('completion')
-                                print('chunk: ', chunk)
-                        print(output)
+                                print('event: ', event)
+                        print('stream: ', stream)
                                     #print(json.loads(chunk.get('bytes').decode))
                         """
                         i = 1
