@@ -451,7 +451,7 @@ export class CdkStreamChatbotStack extends cdk.Stack {
       handler: "index.handler", 
       timeout: cdk.Duration.seconds(10),
       logRetention: logs.RetentionDays.ONE_DAY,
-      role: roleLambda,
+      role: roleWebLambda,
       environment: {
         connection_url: connection_url
       }      
