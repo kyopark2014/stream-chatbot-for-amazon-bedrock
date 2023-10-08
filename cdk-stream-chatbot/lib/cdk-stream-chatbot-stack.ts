@@ -424,8 +424,8 @@ export class CdkStreamChatbotStack extends cdk.Stack {
     // Lambda - chat (websocket)
     const functionName = `lambda-chat-ws-for-${projectName}`;
 
-    const roleLambdaWebsocket = new iam.Role(this, `role-lambda-chat-for-${projectName}`, {
-      roleName: `role-lambda-chat-for-${projectName}-${region}`,
+    const roleLambdaWebsocket = new iam.Role(this, `role-lambda-chat-ws-for-${projectName}`, {
+      roleName: `role-lambda-chat-ws-for-${projectName}-${region}`,
       assumedBy: new iam.CompositePrincipal(
         new iam.ServicePrincipal("lambda.amazonaws.com"),
         new iam.ServicePrincipal("bedrock.amazonaws.com"),
@@ -435,7 +435,7 @@ export class CdkStreamChatbotStack extends cdk.Stack {
       managedPolicyArn: 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole',
     });
     roleLambdaWebsocket.attachInlinePolicy( // add bedrock policy
-      new iam.Policy(this, `bedrock-policy-lambda-chat-for-${projectName}`, {
+      new iam.Policy(this, `bedrock-policy-lambda-chat-ws-for-${projectName}`, {
         statements: [BedrockPolicy],
       }),
     );        
