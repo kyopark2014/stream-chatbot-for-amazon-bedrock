@@ -407,8 +407,9 @@ def lambda_handler(event, context):
             print('event[body]: ', event['body'])
             data = event['body']
             print('data: ', data)
-            obj = base64.b64decode(data)
-            reqBody = json.load(obj)
+            first = event['body'][0]
+            print('first: ', first)
+            reqBody = json.load(first)
             print('reqBody: ', reqBody)
 
             msg = getResponse(reqBody)
