@@ -390,7 +390,7 @@ export class CdkStreamChatbotStack extends cdk.Stack {
 
     // stream api gateway
     // API Gateway
-    const websocketapi = new apigatewayv2.CfnApi(this, `api-chatbot-for-${projectName}`, {
+    const websocketapi = new apigatewayv2.CfnApi(this, `ws-api-for-${projectName}`, {
       description: 'API Gateway for chatbot using websocket',
       apiKeySelectionExpression: "$request.header.x-api-key",
       name: projectName,
