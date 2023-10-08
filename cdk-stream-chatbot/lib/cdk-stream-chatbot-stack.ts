@@ -457,7 +457,7 @@ export class CdkStreamChatbotStack extends cdk.Stack {
       }      
     }); */
 
-    const lambdaWebchat = new lambda.Function(this, `lambda-chat-ws-for-${projectName}` {
+    const lambdaWebchat = new lambda.Function(this, `lambda-chat-ws-for-${projectName}`, {
       description: 'lambda for chat using websocket',
       functionName: functionName,
       handler: 'lambda_function.lambda_handler',
