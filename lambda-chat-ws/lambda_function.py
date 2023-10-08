@@ -67,10 +67,19 @@ def get_parameter(modelId):
         }
 parameters = get_parameter(modelId)
 
+#llm = Bedrock(
+#    model_id=modelId, 
+#    client=boto3_bedrock, 
+#    streaming=True,
+#    model_kwargs=parameters)
+
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+
 llm = Bedrock(
     model_id=modelId, 
     client=boto3_bedrock, 
-    #streaming=True,
+    streaming=True,
+    callbacks=[StreamingStdOutCallbackHandler()]
     model_kwargs=parameters)
 
 map = dict() # Conversation
@@ -340,7 +349,22 @@ def getResponse(reqBody):
                         msg = llm(PROMPT.format(input=text))
                     else:    
                         conversation.prompt = get_prompt_template(text, convType)
-                        msg = conversation.predict(input=text)
+                        stream = conversation.predict(input=text)
+
+                        i = 1
+                        output = []
+                        if stream:
+                            for event in stream:
+                                chunk = event.get('chunk')
+                                if chunk:
+                                    chunk_obj = json.loads(chunk.get('bytes').decode())
+                                    text = chunk_obj['outputText']
+                                    output.append(text)
+                                    print(f'\t\t\x1b[31m**Chunk {i}**\x1b[0m\n{text}\n')
+                                    i+=1
+                        msg = "stream out"
+
+
 
                     # extract chat history for debug
                     chats = chat_memory.load_memory_variables({})
