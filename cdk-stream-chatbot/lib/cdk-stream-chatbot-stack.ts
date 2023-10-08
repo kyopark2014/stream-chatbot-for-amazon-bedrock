@@ -444,19 +444,6 @@ export class CdkStreamChatbotStack extends cdk.Stack {
     // Lambda - chat (websocket)
     const functionName = `lambda-chat-ws-for-${projectName}`;
 
-    /*const lambdaChatWebsocket = new lambda.Function(this, `lambda-webchat-for-${projectName}`, {
-      runtime: lambda.Runtime.NODEJS_16_X, 
-      functionName: functionName,
-      code: lambda.Code.fromAsset("../lambda-webchat"), 
-      handler: "index.handler", 
-      timeout: cdk.Duration.seconds(10),
-      logRetention: logs.RetentionDays.ONE_DAY,
-      role: roleWebLambda,
-      environment: {
-        connection_url: connection_url
-      }      
-    }); */
-
     const lambdaChatWebsocket = new lambda.Function(this, `lambda-chat-ws-for-${projectName}`, {
       description: 'lambda for chat using websocket',
       functionName: functionName,
