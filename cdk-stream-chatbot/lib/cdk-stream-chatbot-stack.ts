@@ -506,7 +506,7 @@ export class CdkStreamChatbotStack extends cdk.Stack {
     }); 
 
     // deploy components
-    new componentDeployment(scope, "deployments", websocketapi.attrApiId)  
+    new componentDeployment(scope, "deployment-stream-chatbot-simple", websocketapi.attrApiId)  
   }
 }
 
