@@ -355,6 +355,7 @@ def getResponse(reqBody):
                         output = []
                         if stream:
                             for event in stream:
+                                print('event: ', event)
                                 chunk = event.get('chunk')
                                 if chunk:
                                     chunk_obj = json.loads(chunk.get('bytes').decode())
