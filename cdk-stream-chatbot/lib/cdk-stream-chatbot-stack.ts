@@ -471,7 +471,7 @@ export class CdkStreamChatbotStack extends cdk.Stack {
 
     const lambdaChatWebsocket = new lambda.DockerImageFunction(this, `lambda-chat-ws-for-${projectName}`, {
       description: 'lambda for chat using websocket',
-      functionName: `lambda-chat-ws-for-${projectName}`,
+      functionName: functionName,
       code: lambda.DockerImageCode.fromImageAsset(path.join(__dirname, '../../lambda-chat-ws')),
       timeout: cdk.Duration.seconds(300),
       role: roleLambdaWebsocket,
