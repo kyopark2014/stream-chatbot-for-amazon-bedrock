@@ -272,7 +272,7 @@ def getAllowTime():
 
     return timeStr
 
-def getResponse(reqBody):
+def getResponse(connectionId, requestId, reqBody):
     userId  = reqBody['user_id']
     # print('userId: ', userId)
     requestId  = reqBody['request_id']
@@ -352,34 +352,19 @@ def getResponse(reqBody):
                         stream = conversation.predict(input=text)
                         print('stream: ', stream)
                         
-                        output = ""
+                        msg = ""
                         if stream:
                             for event in stream:
-                                #chunk=event.get('chunk')
-                                #if chunk:
-                                #    c = json.loads(chunk.get('bytes').decode("utf-8"))
-                                #    if c:
-                                #        output = output + c.get('completion')
                                 print('event: ', event)
-                        print('stream: ', stream)
-                                    #print(json.loads(chunk.get('bytes').decode))
-                        """
-                        i = 1
-                        output = []
-                        if stream:
-                            for event in stream:
-                                print('event: ', json.dumps(event))
-                                chunk = event.get('chunk')
-                                if chunk:
-                                    chunk_obj = json.loads(chunk.get('bytes').decode())
-                                    text = chunk_obj['outputText']
-                                    output.append(text)
-                                    print(f'\t\t\x1b[31m**Chunk {i}**\x1b[0m\n{text}\n')
-                                    i+=1
-                        """
-                        msg = "stream out"
+                                msg = msg + event
 
-
+                                result = {
+                                    'request_id': requestId,
+                                    'msg': msg
+                                }
+                                print('result: ', json.dumps(result))
+                                sendMessage(connectionId, result)
+                        print('msg: ', msg)
 
                     # extract chat history for debug
                     chats = chat_memory.load_memory_variables({})
@@ -446,17 +431,11 @@ def lambda_handler(event, context):
             body = json.loads(event.get("body", ""))
             print('body: ', body)
 
-            msg = getResponse(body)
+            msg = getResponse(connectionId, requestId, body)
 
-            userId  = body['user_id']
             requestId  = body['request_id']
-            requestTime  = body['request_time']
-            type  = body['type']
             result = {
-                'user_id': userId, 
                 'request_id': requestId,
-                'request_time': requestTime,
-                'type': type,
                 'msg': msg
             }
             print('result: ', json.dumps(result))
