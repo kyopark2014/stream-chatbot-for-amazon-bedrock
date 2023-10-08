@@ -1,6 +1,4 @@
-const dest_api_gw = "wss://ogqin9fa1d.execute-api.ap-northeast-1.amazonaws.com/dev";
-const dest_cf = "wss://d2tl9ytaw56jqq.cloudfront.net/ws";
-const dest_origin = "wss://vdwyxxbir1.execute-api.ap-northeast-2.amazonaws.com/ws"
+const dest_api_gw = "wss://uiw8jqz5s3.execute-api.ap-northeast-1.amazonaws.com/dev";
 
 dest = dest_api_gw;
 console.log('dest: ', dest);
@@ -14,7 +12,14 @@ function sendMessage(message) {
 // connection event
 webSocket.onopen = function () {
     console.log('connected...!')
-    sendMessage(`{"msgId": "abc1234", "question": "Hello world!"}`)
+    sendMessage(`{
+        "user-id": "user1234",
+        "request-id": "test1234",
+        "request_time": "2023-10-08 18:01:45",        
+        "type": "text",
+        "body": "Building a website can be done in 10 simple steps.",
+        "convType": "normal"
+    }`)
     // alert("Successfully connected");
 };
 

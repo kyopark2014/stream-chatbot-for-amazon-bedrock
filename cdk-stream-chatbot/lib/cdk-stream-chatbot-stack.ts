@@ -492,12 +492,25 @@ export class CdkStreamChatbotStack extends cdk.Stack {
       value: lambdaChatWebsocket.functionArn,
       description: 'The arn of lambda webchat.',
     });
+
+    // role
+    const role_websocket = new iam.Role(this, `api-role-ws-for-${projectName}`, {
+      roleName: `api-role-ws-for-${projectName}`,
+      assumedBy: new iam.ServicePrincipal("apigateway.amazonaws.com")
+    });
+    role_websocket.addToPolicy(new iam.PolicyStatement({
+      resources: ['*'],
+      actions: ['lambda:InvokeFunction']
+    }));
+    role_websocket.addManagedPolicy({
+      managedPolicyArn: 'arn:aws:iam::aws:policy/AWSLambdaExecute',
+    }); 
     
     const integrationUri = `arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambdaChatWebsocket.functionArn}/invocations`;    
     const cfnIntegration = new apigatewayv2.CfnIntegration(this, `api-integration-for-${projectName}`, {
       apiId: websocketapi.attrApiId,
       integrationType: 'AWS_PROXY',
-      credentialsArn: role.roleArn,
+      credentialsArn: role_websocket.roleArn,
       connectionType: 'INTERNET',
       description: 'Integration for connect',
       integrationUri: integrationUri,
