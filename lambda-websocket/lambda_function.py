@@ -25,19 +25,19 @@ def lambda_handler(event, context):
         routeKey = event['requestContext']['routeKey']
         print('routeKey: ', routeKey)
         
-    if routeKey == '$connect':
-        print('connected!')
-    elif routeKey == '$disconnect':
-        print('disconnected!')
-    else:
-        body = json.loads(event['body'])
-        print('body: ', body)
-        msgId = body['msgId']
+        if routeKey == '$connect':
+            print('connected!')
+        elif routeKey == '$disconnect':
+            print('disconnected!')
+        else:
+            body = json.loads(event['body'])
+            print('body: ', body)
+            msgId = body['msgId']
 
-        msg = {'msgId': msgId, 'msg': 'First: Great!'}
-        sendMessage(connectionId, msg)
-        msg = {'msgId': msgId, 'msg': "Second: What a great day!!"}
-        sendMessage(connectionId, msg)                     
+            msg = {'msgId': msgId, 'msg': 'First: Great!'}
+            sendMessage(connectionId, msg)
+            msg = {'msgId': msgId, 'msg': "Second: What a great day!!"}
+            sendMessage(connectionId, msg)                     
 
     return {
         'statusCode': 200,

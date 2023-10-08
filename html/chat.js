@@ -1,46 +1,51 @@
-const dest_api_gw = "wss://uiw8jqz5s3.execute-api.ap-northeast-1.amazonaws.com/dev";
+const protocol = 'WEBSOCKET'; // WEBSOCKERT or HTTP
 
-dest = dest_api_gw;
-console.log('dest: ', dest);
-const webSocket = new WebSocket(dest);
+let webSocket;
+if(protocol == 'WEBSOCKET') {
+    const endpoint = 'wss://uiw8jqz5s3.execute-api.ap-northeast-1.amazonaws.com/dev';
+
+    connect(endpoint);
+}
 
 function sendMessage(message) {
     webSocket.send(message);     
     console.log('message: ', message);
 }
 
-// connection event
-webSocket.onopen = function () {
-    console.log('connected...!')
-    sendMessage(`{
-        "user-id": "user1234",
-        "request-id": "test1234",
-        "request_time": "2023-10-08 18:01:45",        
-        "type": "text",
-        "body": "Building a website can be done in 10 simple steps.",
-        "convType": "normal"
-    }`)
-    // alert("Successfully connected");
-};
+function connect(endpoint) {
+    webSocket = new WebSocket(endpoint);
 
-// message 
-webSocket.onmessage = function (event) {
-    console.log('received message: ', event.data);
-    // alert(event.data);
-};
+    // connection event
+    webSocket.onopen = function () {
+        console.log('connected...!')
+        sendMessage(`{
+            "user-id": "user1234",
+            "request-id": "test1234",
+            "request_time": "2023-10-08 18:01:45",        
+            "type": "text",
+            "body": "Building a website can be done in 10 simple steps.",
+            "convType": "normal"
+        }`)
+        // alert("Successfully connected");
+    };
 
-// disconnect
-webSocket.onclose = function () {
-    console.log('disconnected...!');
-    // alert("the connection was closed");
-};
+    // message 
+    webSocket.onmessage = function (event) {
+        console.log('received message: ', event.data);
+        // alert(event.data);
+    };
 
-// error
-webSocket.onerror = function (error) {
-    console.log(error);
-};
+    // disconnect
+    webSocket.onclose = function () {
+        console.log('disconnected...!');
+        // alert("the connection was closed");
+    };
 
-
+    // error
+    webSocket.onerror = function (error) {
+        console.log(error);
+    };
+}
 
 // Documents
 const title = document.querySelector('#title');

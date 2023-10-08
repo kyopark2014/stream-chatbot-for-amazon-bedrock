@@ -390,6 +390,7 @@ def getResponse(reqBody):
 
     return msg
 
+"""
 def lambda_handler(event, context):
     print(event)
     
@@ -427,4 +428,32 @@ def lambda_handler(event, context):
     return {
         'statusCode': 200,
         'msg': routeKey,
+    }
+"""
+def lambda_handler(event, context):
+    print('event: ', event)
+
+    if event['requestContext']: 
+        connectionId = event['requestContext']['connectionId']
+        print('connectionId: ', connectionId)
+        routeKey = event['requestContext']['routeKey']
+        print('routeKey: ', routeKey)
+        
+        if routeKey == '$connect':
+            print('connected!')
+        elif routeKey == '$disconnect':
+            print('disconnected!')
+        else:
+            body = json.loads(event['body'])
+            print('body: ', body)
+            msgId = body['msgId']
+
+            msg = {'msgId': msgId, 'msg': 'First: Great!'}
+            sendMessage(connectionId, msg)
+            msg = {'msgId': msgId, 'msg': "Second: What a great day!!"}
+            sendMessage(connectionId, msg)                     
+
+    return {
+        'statusCode': 200,
+        #'msg': msg,
     }
