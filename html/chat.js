@@ -1,3 +1,42 @@
+const dest_api_gw = "wss://ogqin9fa1d.execute-api.ap-northeast-1.amazonaws.com/dev";
+const dest_cf = "wss://d2tl9ytaw56jqq.cloudfront.net/ws";
+const dest_origin = "wss://vdwyxxbir1.execute-api.ap-northeast-2.amazonaws.com/ws"
+
+dest = dest_api_gw;
+console.log('dest: ', dest);
+const webSocket = new WebSocket(dest);
+
+function sendMessage(message) {
+    webSocket.send(message);     
+    console.log('message: ', message);
+}
+
+// connection event
+webSocket.onopen = function () {
+    console.log('connected...!')
+    sendMessage(`{"msgId": "abc1234", "question": "Hello world!"}`)
+    // alert("Successfully connected");
+};
+
+// message 
+webSocket.onmessage = function (event) {
+    console.log('received message: ', event.data);
+    // alert(event.data);
+};
+
+// disconnect
+webSocket.onclose = function () {
+    console.log('disconnected...!');
+    // alert("the connection was closed");
+};
+
+// error
+webSocket.onerror = function (error) {
+    console.log(error);
+};
+
+
+
 // Documents
 const title = document.querySelector('#title');
 const sendBtn = document.querySelector('#sendBtn');

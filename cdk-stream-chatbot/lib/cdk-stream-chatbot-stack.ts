@@ -441,10 +441,10 @@ export class CdkStreamChatbotStack extends cdk.Stack {
       }),
     );  
 
-    // Lambda - webchat
-    const functionName = `lambda-webchat-for-${projectName}`;
+    // Lambda - chat (websocket)
+    const functionName = `lambda-chat-ws-for-${projectName}`;
 
-    const lambdaWebchat = new lambda.Function(this, `lambda-webchat-for-${projectName}`, {
+    /*const lambdaWebchat = new lambda.Function(this, `lambda-webchat-for-${projectName}`, {
       runtime: lambda.Runtime.NODEJS_16_X, 
       functionName: functionName,
       code: lambda.Code.fromAsset("../lambda-webchat"), 
@@ -455,7 +455,21 @@ export class CdkStreamChatbotStack extends cdk.Stack {
       environment: {
         connection_url: connection_url
       }      
+    }); */
+
+    const lambdaWebchat = new lambda.Function(this, `lambda-chat-ws-for-${projectName}` {
+      description: 'lambda for chat using websocket',
+      functionName: functionName,
+      handler: 'lambda_function.lambda_handler',
+      runtime: lambda.Runtime.PYTHON_3_11,
+      code: lambda.Code.fromAsset(path.join(__dirname, '../../lambda-chat-ws')),
+      timeout: cdk.Duration.seconds(120),
+      logRetention: logs.RetentionDays.ONE_DAY,
+      environment: {
+        connection_url: connection_url
+      }
     });
+
     lambdaWebchat.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));  
 
     new cdk.CfnOutput(this, 'function-webchat-arn', {
@@ -507,6 +521,21 @@ export class CdkStreamChatbotStack extends cdk.Stack {
 
     // deploy components
     new componentDeployment(scope, "deployment-stream-chatbot-simple", websocketapi.attrApiId)  
+
+    //const wsOriginRequestPolicy = new cloudFront.OriginRequestPolicy(this, `webSocketPolicy`, {
+    //  originRequestPolicyName: "webSocketPolicy",
+    //  comment: `A default WebSocket policy`,
+    //  cookieBehavior: cloudFront.OriginRequestCookieBehavior.none(),
+    //  headerBehavior: cloudFront.OriginRequestHeaderBehavior.allowList(`Sec-WebSocket-Key`, `Sec-WebSocket-Version`, `Sec-WebSocket-Protocol`, `Sec-WebSocket-Accept`),
+    //  queryStringBehavior: cloudFront.OriginRequestQueryStringBehavior.none(),
+    //});
+    
+    // cloudfront setting for api gateway    
+    // distribution.addBehavior("/ws", new origins.HttpOrigin(websocketapi), {
+    //  cachePolicy: cloudFront.CachePolicy.CACHING_DISABLED,
+    //  allowedMethods: cloudFront.AllowedMethods.ALLOW_ALL,  
+    //  viewerProtocolPolicy: cloudFront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+    //});        
   }
 }
 
