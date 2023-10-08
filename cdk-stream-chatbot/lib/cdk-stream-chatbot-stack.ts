@@ -444,7 +444,7 @@ export class CdkStreamChatbotStack extends cdk.Stack {
     // Lambda - chat (websocket)
     const functionName = `lambda-chat-ws-for-${projectName}`;
 
-    /*const lambdaWebchat = new lambda.Function(this, `lambda-webchat-for-${projectName}`, {
+    /*const lambdaChatWebsocket = new lambda.Function(this, `lambda-webchat-for-${projectName}`, {
       runtime: lambda.Runtime.NODEJS_16_X, 
       functionName: functionName,
       code: lambda.Code.fromAsset("../lambda-webchat"), 
@@ -457,7 +457,7 @@ export class CdkStreamChatbotStack extends cdk.Stack {
       }      
     }); */
 
-    const lambdaWebchat = new lambda.Function(this, `lambda-chat-ws-for-${projectName}`, {
+    const lambdaChatWebsocket = new lambda.Function(this, `lambda-chat-ws-for-${projectName}`, {
       description: 'lambda for chat using websocket',
       functionName: functionName,
       handler: 'lambda_function.lambda_handler',
@@ -470,14 +470,14 @@ export class CdkStreamChatbotStack extends cdk.Stack {
       }
     });
 
-    lambdaWebchat.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));  
+    lambdaChatWebsocket.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));  
 
     new cdk.CfnOutput(this, 'function-webchat-arn', {
-      value: lambdaWebchat.functionArn,
+      value: lambdaChatWebsocket.functionArn,
       description: 'The arn of lambda webchat.',
     });
     
-    const integrationUri = `arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambdaWebchat.functionArn}/invocations`;    
+    const integrationUri = `arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambdaChatWebsocket.functionArn}/invocations`;    
     const cfnIntegration = new apigatewayv2.CfnIntegration(this, `api-integration-for-${projectName}`, {
       apiId: websocketapi.attrApiId,
       integrationType: 'AWS_PROXY',
