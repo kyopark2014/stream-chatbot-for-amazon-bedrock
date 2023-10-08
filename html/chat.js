@@ -12,7 +12,7 @@ function sendMessage(message) {
         webSocket = connect(endpoint);
     }
 
-    webSocket.send(message);     
+    webSocket.send(JSON.stringify(message));     
     console.log('message: ', message);    
 }
 
