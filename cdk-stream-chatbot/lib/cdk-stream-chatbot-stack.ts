@@ -422,8 +422,6 @@ export class CdkStreamChatbotStack extends cdk.Stack {
     
 
     // Lambda - chat (websocket)
-    const functionName = `lambda-chat-ws-for-${projectName}`;
-
     const roleLambdaWebsocket = new iam.Role(this, `role-lambda-chat-ws-for-${projectName}`, {
       roleName: `role-lambda-chat-ws-for-${projectName}-${region}`,
       assumedBy: new iam.CompositePrincipal(
@@ -454,7 +452,8 @@ export class CdkStreamChatbotStack extends cdk.Stack {
       }),
     );  
 
-  /*  const lambdaChatWebsocket = new lambda.Function(this, `lambda-websocket-for-${projectName}`, {
+  /*  const functionName = `lambda-websocket-for-${projectName}`;
+      const lambdaChatWebsocket = new lambda.Function(this, `lambda-websocket-for-${projectName}`, {
       description: 'lambda for websocket in order to test the connection of websocket ',
       functionName: functionName,
       handler: 'lambda_function.lambda_handler',
@@ -471,7 +470,7 @@ export class CdkStreamChatbotStack extends cdk.Stack {
 
     const lambdaChatWebsocket = new lambda.DockerImageFunction(this, `lambda-chat-ws-for-${projectName}`, {
       description: 'lambda for chat using websocket',
-      functionName: functionName,
+      functionName: `lambda-chatbot-ws-for-${projectName}`,
       code: lambda.DockerImageCode.fromImageAsset(path.join(__dirname, '../../lambda-chat-ws')),
       timeout: cdk.Duration.seconds(300),
       role: roleLambdaWebsocket,
