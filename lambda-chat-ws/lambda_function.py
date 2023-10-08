@@ -350,16 +350,17 @@ def getResponse(reqBody):
                     else:    
                         conversation.prompt = get_prompt_template(text, convType)
                         stream = conversation.predict(input=text)
-
+                        print('stream: ', stream)
+                        
                         output = ""
                         if stream:
                             for event in stream:
                                 chunk=event.get('chunk')
-                                if chunk:
-                                    c = json.loads(chunk.get('bytes').decode("utf-8"))
-                                    if c:
-                                        output = output + c.get('completion')
-                                print('output: ', output)
+                                #if chunk:
+                                #    c = json.loads(chunk.get('bytes').decode("utf-8"))
+                                #    if c:
+                                #        output = output + c.get('completion')
+                                print('chunk: ', chunk)
                         print(output)
                                     #print(json.loads(chunk.get('bytes').decode))
                         """
