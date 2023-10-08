@@ -25,6 +25,19 @@ bedrock_region = os.environ.get('bedrock_region', 'us-west-2')
 modelId = os.environ.get('model_id', 'amazon.titan-tg1-large')
 print('model_id: ', modelId)
 conversationMode = os.environ.get('conversationMode', 'false')
+
+connection_url = os.environ.get('connection_url')
+client = boto3.client('apigatewaymanagementapi', endpoint_url=connection_url)
+print('connection_url: ', connection_url)
+
+def sendMessage(id, body):
+    try:
+        client.post_to_connection(
+            ConnectionId=id, 
+            Data=json.dumps(body)
+        )
+    except: 
+        raise Exception ("Not able to send a message")
    
 boto3_bedrock = boto3.client(
     service_name='bedrock-runtime',
@@ -249,21 +262,42 @@ def getAllowTime():
 
 def lambda_handler(event, context):
     print(event)
-    userId  = event['user_id']
-    print('userId: ', userId)
-    requestId  = event['request_id']
-    print('requestId: ', requestId)
-    requestTime  = event['request_time']
-    print('requestTime: ', requestTime)
-    type  = event['type']
-    print('type: ', type)
-    body = event['body']
-    print('body: ', body)
-    convType = event['convType']
-    print('convType: ', convType)
+    #userId  = event['user_id']
+    #print('userId: ', userId)
+    #requestId  = event['request_id']
+    #print('requestId: ', requestId)
+    #requestTime  = event['request_time']
+    #print('requestTime: ', requestTime)
+    #type  = event['type']
+    #print('type: ', type)
+    #body = event['body']
+    #print('body: ', body)
+    #convType = event['convType']
+    #print('convType: ', convType)
+
+    if event['requestContext']: 
+        connectionId = event['requestContext']['connectionId']
+        print('connectionId: ', connectionId)
+        routeKey = event['requestContext']['routeKey']
+        print('routeKey: ', routeKey)
+        
+    if routeKey == '$connect':
+        print('connected!')
+    elif routeKey == '$disconnect':
+        print('disconnected!')
+    else:
+        body = json.loads(event['body'])
+        print('body: ', body)
+        msgId = body['msgId']
+
+        msg = {'msgId': msgId, 'msg': 'First: Great!'}
+        sendMessage(connectionId, msg)
+        msg = {'msgId': msgId, 'msg': "Second: What a great day!!"}
+        sendMessage(connectionId, msg)     
 
     global modelId, llm, parameters, conversation, conversationMode, map, chat_memory
 
+    """
     # create chat_memory
     if userId in map:  
         chat_memory = map[userId]
@@ -373,8 +407,8 @@ def lambda_handler(event, context):
             raise Exception ("Not able to write into dynamodb")
         
         print('resp, ', resp)
-
+    """
     return {
         'statusCode': 200,
-        'msg': msg,
+        #'msg': msg,
     }
