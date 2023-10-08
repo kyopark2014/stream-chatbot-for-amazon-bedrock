@@ -262,35 +262,21 @@ def getAllowTime():
 
     return timeStr
 
-def lambda_handler(event, context):
-    print(event)
-    
-    if event['requestContext']: 
-        connectionId = event['requestContext']['connectionId']
-        print('connectionId: ', connectionId)
-        routeKey = event['requestContext']['routeKey']
-        print('routeKey: ', routeKey)
+def getResponse(reqBody):
+    print('reqBody: ', reqBody)
         
-    if routeKey == '$connect':
-        print('connected!')
-    elif routeKey == '$disconnect':
-        print('disconnected!')
-    else:
-        reqBody = json.loads(event['body'])
-        print('reqBody: ', reqBody)
-        
-        userId  = reqBody['user_id']
-        print('userId: ', userId)
-        requestId  = reqBody['request_id']
-        print('requestId: ', requestId)
-        requestTime  = reqBody['request_time']
-        print('requestTime: ', requestTime)
-        type  = reqBody['type']
-        print('type: ', type)
-        body = reqBody['body']
-        print('body: ', body)
-        convType = reqBody['convType']
-        print('convType: ', convType)
+    userId  = reqBody['user_id']
+    print('userId: ', userId)
+    requestId  = reqBody['request_id']
+    print('requestId: ', requestId)
+    requestTime  = reqBody['request_time']
+    print('requestTime: ', requestTime)
+    type  = reqBody['type']
+    print('type: ', type)
+    body = reqBody['body']
+    print('body: ', body)
+    convType = reqBody['convType']
+    print('convType: ', convType)
 
     global modelId, llm, parameters, conversation, conversationMode, map, chat_memory
 
@@ -402,7 +388,31 @@ def lambda_handler(event, context):
             raise Exception ("Not able to write into dynamodb")        
         print('resp, ', resp)
 
-        # send the result
+    return msg
+
+def lambda_handler(event, context):
+    print(event)
+    
+    if event['requestContext']: 
+        connectionId = event['requestContext']['connectionId']
+        print('connectionId: ', connectionId)
+        routeKey = event['requestContext']['routeKey']
+        print('routeKey: ', routeKey)
+        
+    if routeKey == '$connect':
+        print('connected!')
+    elif routeKey == '$disconnect':
+        print('disconnected!')
+    else:
+        reqBody = json.loads(event['body'])
+        print('reqBody: ', reqBody)
+        
+        msg = getResponse(reqBody)
+
+        userId  = reqBody['user_id']
+        requestId  = reqBody['request_id']
+        requestTime  = reqBody['request_time']
+        type  = reqBody['type']
         result = {
             'user_id': userId, 
             'request_id': requestId,
@@ -410,9 +420,10 @@ def lambda_handler(event, context):
             'type': type,
             'msg': msg
         }
+        print('result: ', json.dumps(result))
         sendMessage(connectionId, result)
 
     return {
         'statusCode': 200,
-        'msg': msg,
+        'msg': routeKey,
     }
