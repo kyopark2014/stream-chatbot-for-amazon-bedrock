@@ -1,27 +1,32 @@
-const protocol = 'WEBSOCKET'; // WEBSOCKERT or HTTP
+const protocol = 'WEBSOCKET'; // WEBSOCKET or HTTP
+const endpoint = 'wss://etl2hxx4la.execute-api.ap-northeast-1.amazonaws.com/dev';
 
-let webSocket;
+let webSocket
+let isConnected = false;
 if(protocol == 'WEBSOCKET') {
-    const endpoint = 'wss://uiw8jqz5s3.execute-api.ap-northeast-1.amazonaws.com/dev';
-
-    connect(endpoint);
+    webSocket = connect(endpoint);
 }
 
 function sendMessage(message) {
+    if(!isConnected) {
+        webSocket = connect(endpoint);
+    }
+
     webSocket.send(message);     
-    console.log('message: ', message);
+    console.log('message: ', message);    
 }
 
 function connect(endpoint) {
-    webSocket = new WebSocket(endpoint);
+    const ws = new WebSocket(endpoint);
 
     // connection event
-    webSocket.onopen = function () {
+    ws.onopen = function () {
         console.log('connected...!');
+        isConnected = true;
     };
 
     // message 
-    webSocket.onmessage = function (event) {
+    ws.onmessage = function (event) {
         console.log('received message: ', event.data);
 
         result = JSON.parse(event.data)
@@ -29,14 +34,17 @@ function connect(endpoint) {
     };
 
     // disconnect
-    webSocket.onclose = function () {
+    ws.onclose = function () {
         console.log('disconnected...!');
+        isConnected = false;
     };
 
     // error
-    webSocket.onerror = function (error) {
+    ws.onerror = function (error) {
         console.log(error);
     };
+
+    return ws;
 }
 
 // Documents
@@ -441,7 +449,6 @@ function sendRequest(text, requestId, requestTime) {
     const uri = "chat";
     const xhr = new XMLHttpRequest();
 
-    let requestId = uuidv4();
     isResponsed.put(requestId, false);
     retryNum.put(requestId, 12); // max 60s (5x12)
 
