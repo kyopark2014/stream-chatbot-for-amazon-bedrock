@@ -406,15 +406,13 @@ def lambda_handler(event, context):
         else:
             body = json.loads(event.get("body", ""))
             print('body: ', body)
-            reqBody = json.load(body)
-            print('reqBody: ', reqBody)
 
-            msg = getResponse(reqBody)
+            msg = getResponse(body)
 
-            userId  = reqBody['user_id']
-            requestId  = reqBody['request_id']
-            requestTime  = reqBody['request_time']
-            type  = reqBody['type']
+            userId  = body['user_id']
+            requestId  = body['request_id']
+            requestTime  = body['request_time']
+            type  = body['type']
             result = {
                 'user_id': userId, 
                 'request_id': requestId,
