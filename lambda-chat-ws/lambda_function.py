@@ -403,7 +403,10 @@ def lambda_handler(event, context):
         elif routeKey == '$disconnect':
             print('disconnected!')
         else:
-            reqBody = json.loads(event['body'])
+            print('event[body]: ', event['body'])
+            print('event[body]: ', event['body'].decode('utf-8'))
+            
+            reqBody = json.loads(event['body'].decode('utf-8'))
             print('reqBody: ', reqBody)
 
             msg = getResponse(reqBody)
