@@ -79,7 +79,7 @@ llm = Bedrock(
     model_id=modelId, 
     client=boto3_bedrock, 
     streaming=True,
-    callbacks=[StreamingStdOutCallbackHandler()]
+    callbacks=[StreamingStdOutCallbackHandler()],
     model_kwargs=parameters)
 
 map = dict() # Conversation
