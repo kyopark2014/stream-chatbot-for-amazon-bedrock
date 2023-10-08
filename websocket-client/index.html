@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>web socket</title>
+  </head>
+  <script>
+    const webSocket = new WebSocket("wss://ogqin9fa1d.execute-api.ap-northeast-1.amazonaws.com/dev");
+
+    // 웹 소켓 연결 이벤트
+    webSocket.onopen = function () {
+        console.log('connected...!')
+        // alert("웹소켓 서버와 연결에 성공했습니다.");
+    };
+
+    // 웹 소켓 메세지 수신
+    webSocket.onmessage = function (event) {
+        console.log('received message: ', event.data);
+        // alert(event.data);
+    };
+
+    // 웹 소켓 연결 종료
+    webSocket.onclose = function () {
+        console.log('disconnected...!');
+        // alert("웹소켓 서버와 연결이 종료되었습니다.");
+    };
+
+    // 오류 발생
+    webSocket.onerror = function (error) {
+        console.log(error);
+    };
+
+    function sendMessage() {
+        const message = document.getElementById("message").value;
+        webSocket.send(message);
+         
+        console.log('message: ', message);
+    }
+  </script>
+  <body>
+    <div>
+      <input type="text" id="message" />
+      <button type="button" onclick="sendMessage()">전송</button>
+    </div>
+    <div></div>
+  </body>
+</html>
