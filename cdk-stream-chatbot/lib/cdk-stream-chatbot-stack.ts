@@ -441,7 +441,8 @@ export class CdkStreamChatbotStack extends cdk.Stack {
     );        
 
     const apiInvokePolicy = new iam.PolicyStatement({ 
-      resources: ['arn:aws:execute-api:*:*:*'],
+      // resources: ['arn:aws:execute-api:*:*:*'],
+      resources: ['*'],
       actions: [
         'execute-api:Invoke',
         'execute-api:ManageConnections'
@@ -488,12 +489,12 @@ export class CdkStreamChatbotStack extends cdk.Stack {
     s3Bucket.grantRead(lambdaChatWebsocket); // permission for s3
     callLogDataTable.grantReadWriteData(lambdaChatWebsocket); // permission for dynamo
     
-    new cdk.CfnOutput(this, 'function-webchat-arn', {
+    new cdk.CfnOutput(this, 'function-chat-ws-arn', {
       value: lambdaChatWebsocket.functionArn,
       description: 'The arn of lambda webchat.',
     });
 
-    // role
+    // api role for websocket
     const role_websocket = new iam.Role(this, `api-role-ws-for-${projectName}`, {
       roleName: `api-role-ws-for-${projectName}`,
       assumedBy: new iam.ServicePrincipal("apigateway.amazonaws.com")
