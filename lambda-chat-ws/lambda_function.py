@@ -272,7 +272,7 @@ def getAllowTime():
 
     return timeStr
 
-def getResponse(connectionId, requestId, reqBody):
+def getResponse(connectionId, reqBody):
     userId  = reqBody['user_id']
     # print('userId: ', userId)
     requestId  = reqBody['request_id']
@@ -431,7 +431,7 @@ def lambda_handler(event, context):
             body = json.loads(event.get("body", ""))
             print('body: ', body)
 
-            msg = getResponse(connectionId, requestId, body)
+            msg = getResponse(connectionId, body)
 
             requestId  = body['request_id']
             result = {
