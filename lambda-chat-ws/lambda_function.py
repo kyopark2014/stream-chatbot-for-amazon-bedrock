@@ -400,10 +400,8 @@ def lambda_handler(event, context):
         
         if routeKey == '$connect':
             print('connected!')
-            msg = 'connected'
         elif routeKey == '$disconnect':
             print('disconnected!')
-            msg = 'disconnected'
         else:
             reqBody = json.loads(event['body'])
             print('reqBody: ', reqBody)
@@ -425,6 +423,5 @@ def lambda_handler(event, context):
             sendMessage(connectionId, result)
 
     return {
-        'statusCode': 200,
-        'msg': msg,
+        'statusCode': 200
     }
