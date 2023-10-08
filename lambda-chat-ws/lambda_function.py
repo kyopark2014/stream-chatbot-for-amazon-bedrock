@@ -404,9 +404,8 @@ def lambda_handler(event, context):
             print('disconnected!')
         else:
             print('event[body]: ', event['body'])
-            print('event[body]: ', event['body'].encode('utf-8'))
             
-            reqBody = json.loads(event['body'].encode('utf-8'))
+            reqBody = json.loads(event['body']).encode('utf-8')
             print('reqBody: ', reqBody)
 
             msg = getResponse(reqBody)
