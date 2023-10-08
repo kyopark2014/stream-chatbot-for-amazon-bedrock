@@ -8,6 +8,7 @@ import PyPDF2
 import csv
 import sys
 import re
+import base64
 
 from langchain.prompts import PromptTemplate
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -404,9 +405,10 @@ def lambda_handler(event, context):
             print('disconnected!')
         else:
             print('event[body]: ', event['body'])
-            data = event['body'].encode('utf-8')
+            data = event['body']
             print('data: ', data)
-            reqBody = json.load(data)
+            obj = base64.b64decode(data)
+            reqBody = json.load(obj)
             print('reqBody: ', reqBody)
 
             msg = getResponse(reqBody)
