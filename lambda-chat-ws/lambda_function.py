@@ -263,20 +263,18 @@ def getAllowTime():
     return timeStr
 
 def getResponse(reqBody):
-    print('reqBody: ', reqBody)
-        
     userId  = reqBody['user_id']
-    print('userId: ', userId)
+    # print('userId: ', userId)
     requestId  = reqBody['request_id']
-    print('requestId: ', requestId)
+    # print('requestId: ', requestId)
     requestTime  = reqBody['request_time']
-    print('requestTime: ', requestTime)
+    # print('requestTime: ', requestTime)
     type  = reqBody['type']
-    print('type: ', type)
+    # print('type: ', type)
     body = reqBody['body']
-    print('body: ', body)
+    # print('body: ', body)
     convType = reqBody['convType']
-    print('convType: ', convType)
+    # print('convType: ', convType)
 
     global modelId, llm, parameters, conversation, conversationMode, map, chat_memory
 
@@ -393,6 +391,7 @@ def getResponse(reqBody):
 def lambda_handler(event, context):
     print('event: ', event)
     
+    msg = ""
     if event['requestContext']: 
         connectionId = event['requestContext']['connectionId']
         print('connectionId: ', connectionId)
@@ -404,18 +403,8 @@ def lambda_handler(event, context):
         elif routeKey == '$disconnect':
             print('disconnected!')
         else:
-            print('routeKey: ', routeKey)
             reqBody = json.loads(event['body'])
             print('reqBody: ', reqBody)
-
-            #body = json.loads(event['body'])
-            #print('body: ', body)
-            #msgId = body['msgId']
-
-            #msg = {'msgId': msgId, 'msg': 'First: Great!'}
-            #sendMessage(connectionId, msg)
-            #msg = {'msgId': msgId, 'msg': "Second: What a great day!!"}
-            #sendMessage(connectionId, msg)
 
             msg = getResponse(reqBody)
 
@@ -435,5 +424,5 @@ def lambda_handler(event, context):
 
     return {
         'statusCode': 200,
-        #'msg': routeKey,
+        'msg': msg,
     }

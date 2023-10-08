@@ -4,8 +4,8 @@ from lambda_function import lambda_handler
 
 def load_event():
     json_data = {
-        "user-id": "user1234",
-        "request-id": "test1234",
+        "user_id": "user1234",
+        "request_id": "test1234",
         "request_time": "2023-10-08 18:01:45",        
         "type": "text",
         "body": "Building a website can be done in 10 simple steps.",

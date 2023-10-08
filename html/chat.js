@@ -17,28 +17,20 @@ function connect(endpoint) {
 
     // connection event
     webSocket.onopen = function () {
-        console.log('connected...!')
-        sendMessage(`{
-            "user-id": "user1234",
-            "request-id": "test1234",
-            "request_time": "2023-10-08 18:01:45",        
-            "type": "text",
-            "body": "Building a website can be done in 10 simple steps.",
-            "convType": "normal"
-        }`)
-        // alert("Successfully connected");
+        console.log('connected...!');
     };
 
     // message 
     webSocket.onmessage = function (event) {
         console.log('received message: ', event.data);
-        // alert(event.data);
+
+        result = JSON.parse(event.data)
+        addReceivedMessage(result.msg);
     };
 
     // disconnect
     webSocket.onclose = function () {
         console.log('disconnected...!');
-        // alert("the connection was closed");
     };
 
     // error
@@ -174,7 +166,21 @@ function onSend(e) {
         let timestr = getTime(current);
         let requestTime = datastr+' '+timestr
         addSentMessage(message.value, timestr);
-        sendRequest(message.value, requestTime);
+
+        let requestId = uuidv4();
+        if(protocol == 'WEBSOCKET') {
+            sendMessage({
+                "user_id": userId,
+                "request_id": requestId,
+                "request_time": requestTime,        
+                "type": "text",
+                "body": message.value,
+                "convType": conversationType
+            })
+        }
+        else {
+            sendRequest(message.value, requestId, requestTime);
+        }            
     }
     else {
         console.log("msg: ", "empty!");
@@ -387,7 +393,20 @@ attachFile.addEventListener('click', function(){
                             console.log(xmlHttp.responseText);
                                            
                             // summary for the upload file
-                            sendRequestForSummary(filename, requestTime);
+                            let requestId = uuidv4();
+                            if(protocol == 'WEBSOCKET') {
+                                sendMessage({
+                                    "user_id": userId,
+                                    "request_id": requestId,
+                                    "request_time": requestTime,
+                                    "type": "document",
+                                    "body": message.value,
+                                    "convType": conversationType
+                                })
+                            }
+                            else {
+                                sendRequestForSummary(filename, requestId, requestTime);
+                            }                            
                         }
                         else if(xmlHttp.readyState == XMLHttpRequest.DONE && xmlHttp.status != 200) {
                             console.log('status' + xmlHttp.status);
@@ -418,7 +437,7 @@ attachFile.addEventListener('click', function(){
 
 let isResponsed = new HashMap();
 let retryNum = new HashMap();
-function sendRequest(text, requestTime) {
+function sendRequest(text, requestId, requestTime) {
     const uri = "chat";
     const xhr = new XMLHttpRequest();
 
@@ -459,11 +478,10 @@ function sendRequest(text, requestTime) {
     xhr.send(blob);            
 }
 
-function sendRequestForSummary(object, requestTime) {
+function sendRequestForSummary(object, requestId, requestTime) {
     const uri = "chat";
     const xhr = new XMLHttpRequest();
 
-    let requestId = uuidv4();
     isResponsed.put(requestId, false);
     retryNum.put(requestId, 60); // max 300s (5x60)
 
@@ -490,7 +508,8 @@ function sendRequestForSummary(object, requestTime) {
         "request_id": requestId,
         "request_time": requestTime,
         "type": "document",
-        "body": object
+        "body": object,
+        "convType": conversationType
     }
     console.log("request: " + JSON.stringify(requestObj));
 
