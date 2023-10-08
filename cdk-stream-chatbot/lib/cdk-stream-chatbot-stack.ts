@@ -471,7 +471,8 @@ export class CdkStreamChatbotStack extends cdk.Stack {
         s3_bucket: s3Bucket.bucketName,
         s3_prefix: s3_prefix,
         callLogTableName: callLogTableName,
-        conversationMode: conversationMode
+        conversationMode: conversationMode,
+        connection_url: connection_url
       }
     });     
     lambdaChatWebsocket.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));  
