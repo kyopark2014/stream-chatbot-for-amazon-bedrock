@@ -152,7 +152,7 @@ def load_document(file_type, s3_file_name):
     print('length: ', len(new_contents))
 
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
+        chunk_size=8000,
         chunk_overlap=100,
         separators=["\n\n", "\n", ".", " ", ""],
         length_function = len,
