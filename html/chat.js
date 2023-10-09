@@ -47,10 +47,15 @@ function connect(endpoint) {
             return;
         }
         else {
-            console.log('received message: ', event.data);
-
             response = JSON.parse(event.data)
-            addReceivedMessage(response.request_id, response.msg);
+
+            if(response.request_id) {
+                console.log('received message: ', event.data);
+                addReceivedMessage(response.request_id, response.msg);
+            }
+            else {
+                console.log('system message: ', event.data);
+            }
         }        
     };
 

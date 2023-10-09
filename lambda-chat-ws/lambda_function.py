@@ -358,13 +358,13 @@ def getResponse(connectionId, reqBody):
                         PROMPT = get_prompt_template(text, convType)
                         msg = llm(PROMPT.format(input=text))
 
-                        readStreamMsg(connectionId, requestId, msg)
+                        msg = readStreamMsg(connectionId, requestId, msg)
                     else:    
                         conversation.prompt = get_prompt_template(text, convType)
                         stream = conversation.predict(input=text)
                         #print('stream: ', stream)
                         
-                        readStreamMsg(connectionId, requestId, stream)
+                        msg = readStreamMsg(connectionId, requestId, stream)
                         
                     # extract chat history for debug
                     chats = chat_memory.load_memory_variables({})
