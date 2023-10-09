@@ -18,7 +18,7 @@ function sendMessage(message) {
 
 let tm
 function ping() {
-    console.log('ping!');
+    console.log('->ping');
     webSocket.send('__ping__');
     tm = setTimeout(function () {
        /// ---connection closed ///
@@ -36,17 +36,19 @@ function connect(endpoint) {
         console.log('connected...!');
         isConnected = true;
 
-        setInterval(ping, 30000);
+        setInterval(ping, 57000);  // ping interval: 57 seconds
     };
 
     // message 
-    ws.onmessage = function (event) {
-        console.log('received message: ', event.data);
-        if (event.data == '__pong__') {
+    ws.onmessage = function (event) {        
+        if (event.data.substr(1,8) == "__pong__") {
+            console.log('<-pong');
             pong();
             return;
         }
         else {
+            console.log('received message: ', event.data);
+
             response = JSON.parse(event.data)
             addReceivedMessage(response.request_id, response.msg);
         }        
