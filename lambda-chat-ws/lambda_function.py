@@ -266,6 +266,22 @@ def getAllowTime():
 
     return timeStr
 
+def readStreamMsg(connectionId, stream):
+    msg = ""
+    if stream:
+        for event in stream:
+            print('event: ', event)
+            msg = msg + event
+
+            result = {
+                'request_id': requestId,
+                'msg': msg
+            }
+            #print('result: ', json.dumps(result))
+            sendMessage(connectionId, result)
+    print('msg: ', msg)
+    return msg
+
 def getResponse(connectionId, reqBody):
     userId  = reqBody['user_id']
     # print('userId: ', userId)
@@ -341,25 +357,15 @@ def getResponse(connectionId, reqBody):
                     if convType == 'translation': 
                         PROMPT = get_prompt_template(text, convType)
                         msg = llm(PROMPT.format(input=text))
+
+                        readStreamMsg(connectionId, msg)
                     else:    
                         conversation.prompt = get_prompt_template(text, convType)
                         stream = conversation.predict(input=text)
-                        print('stream: ', stream)
+                        #print('stream: ', stream)
                         
-                        msg = ""
-                        if stream:
-                            for event in stream:
-                                print('event: ', event)
-                                msg = msg + event
-
-                                result = {
-                                    'request_id': requestId,
-                                    'msg': msg
-                                }
-                                print('result: ', json.dumps(result))
-                                sendMessage(connectionId, result)
-                        print('msg: ', msg)
-
+                        readStreamMsg(connectionId, stream)
+                        
                     # extract chat history for debug
                     chats = chat_memory.load_memory_variables({})
                     chat_history_all = chats['history']
@@ -437,7 +443,7 @@ def lambda_handler(event, context):
                     'request_id': requestId,
                     'msg': msg
                 }
-                print('result: ', json.dumps(result))
+                #print('result: ', json.dumps(result))
                 sendMessage(connectionId, result)
 
     return {
