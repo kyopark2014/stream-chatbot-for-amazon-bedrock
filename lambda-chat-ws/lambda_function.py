@@ -17,6 +17,7 @@ from langchain.chains.summarize import load_summarize_chain
 from langchain.llms.bedrock import Bedrock
 from langchain.chains import ConversationChain
 from langchain.memory import ConversationBufferMemory
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 
 s3 = boto3.client('s3')
 s3_bucket = os.environ.get('s3_bucket') # bucket name
@@ -67,14 +68,7 @@ def get_parameter(modelId):
         }
 parameters = get_parameter(modelId)
 
-#llm = Bedrock(
-#    model_id=modelId, 
-#    client=boto3_bedrock, 
-#    streaming=True,
-#    model_kwargs=parameters)
-
-from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-
+# langchain for bedrock
 llm = Bedrock(
     model_id=modelId, 
     client=boto3_bedrock, 
@@ -428,8 +422,8 @@ def lambda_handler(event, context):
         elif routeKey == '$disconnect':
             print('disconnected!')
         else:
-            print("body[0:8]: ", body[0:8])
-            if body[0:8] == "__ping__":
+            print("event.body[0:8]: ", event.body[0:8])
+            if event.body[0:8] == "__ping__":
                 print("ping!.....")
             else:
                 body = json.loads(event.get("body", ""))
