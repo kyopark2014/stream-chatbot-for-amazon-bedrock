@@ -409,7 +409,7 @@ def getResponse(connectionId, reqBody):
             resp =  client.put_item(TableName=callLogTableName, Item=item)
         except: 
             raise Exception ("Not able to write into dynamodb")        
-        print('resp, ', resp)
+        #print('resp, ', resp)
 
     return msg
 
@@ -437,8 +437,16 @@ def lambda_handler(event, context):
                 json_body = json.loads(body)
                 print('body: ', json_body)
 
-                msg = getResponse(connectionId, json_body)
-
+                try:
+                    msg = getResponse(connectionId, json_body)
+                except: 
+                    result = {
+                        'request_id': requestId,
+                        'msg': "The request was failed by the system error"
+                    }
+                    sendMessage(connectionId, result)
+                    raise Exception ("Not able to send a message")
+                    
                 requestId  = json_body['request_id']
                 result = {
                     'request_id': requestId,
