@@ -282,18 +282,18 @@ def readStreamMsg(connectionId, requestId, stream):
     print('msg: ', msg)
     return msg
 
-def getResponse(connectionId, reqBody):
-    userId  = reqBody['user_id']
+def getResponse(connectionId, jsonBody):
+    userId  = jsonBody['user_id']
     # print('userId: ', userId)
-    requestId  = reqBody['request_id']
+    requestId  = jsonBody['request_id']
     # print('requestId: ', requestId)
-    requestTime  = reqBody['request_time']
+    requestTime  = jsonBody['request_time']
     # print('requestTime: ', requestTime)
-    type  = reqBody['type']
+    type  = jsonBody['type']
     # print('type: ', type)
-    body = reqBody['body']
+    body = jsonBody['body']
     # print('body: ', body)
-    convType = reqBody['convType']
+    convType = jsonBody['convType']
     # print('convType: ', convType)
 
     global modelId, llm, parameters, conversation, conversationMode, map, chat_memory
@@ -434,11 +434,11 @@ def lambda_handler(event, context):
                 print("ping!.....")                
                 sendMessage(connectionId, "__pong__")
             else:
-                json_body = json.loads(body)
-                print('body: ', json_body)
+                jsonBody = json.loads(body)
+                print('body: ', jsonBody)
 
                 try:
-                    msg = getResponse(connectionId, json_body)
+                    msg = getResponse(connectionId, jsonBody)
                 except: 
                     result = {
                         'request_id': requestId,
@@ -447,7 +447,7 @@ def lambda_handler(event, context):
                     sendMessage(connectionId, result)
                     raise Exception ("Not able to send a message")
                     
-                requestId  = json_body['request_id']
+                requestId  = jsonBody['request_id']
                 result = {
                     'request_id': requestId,
                     'msg': msg
