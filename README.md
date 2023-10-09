@@ -1,5 +1,10 @@
 # Amazon Bedrock을 이용하여 Stream 기반의 Chatbot 구현하기 
 
+
+전체적인 Architecture는 아래와 같습니다.
+
+![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/255b44e1-bb33-4140-b330-84e158b01f18)
+
 ## 서버리스 기반의 Websocket 사용하기
 
 API Gateway V2에서 Websocket을 지원하고 있으므로, Lambda와 함께 Stream을 지원하는 Chatbot을 만듧니다.
