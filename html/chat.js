@@ -47,8 +47,8 @@ function connect(endpoint) {
             return;
         }
 
-        result = JSON.parse(event.data)
-        addReceivedMessage(result.msg);
+        response = JSON.parse(event.data)
+        addReceivedMessage(response.request_id, response.msg);
     };
 
     // disconnect
@@ -109,6 +109,9 @@ HashMap.prototype = {
     }
 };
 
+let isResponsed = new HashMap();
+let retryNum = new HashMap();
+
 // message log list
 var msglist = [];
 var maxMsgItems = 200;
@@ -149,7 +152,7 @@ index = 0;
 
 addNotifyMessage("Start chat with Amazon Bedrock");
 
-addReceivedMessage("Welcome to Amazon Bedrock. Use the conversational chatbot and summarize documents, TXT, PDF, and CSV. ")
+addReceivedMessage(uuidv4(), "Welcome to Amazon Bedrock. Use the conversational chatbot and summarize documents, TXT, PDF, and CSV. ")
 
 // get history
 function getAllowTime() {    
@@ -308,10 +311,14 @@ function addSentMessageForSummary(text, timestr) {
     chatPanel.scrollTop = chatPanel.scrollHeight;  // scroll needs to move bottom
 }  
 
-function addReceivedMessage(msg) {
+function addReceivedMessage(requestId, msg) {
     // console.log("add received message: "+msg);
     sender = "Chatbot"
-    index++;
+
+    if(!isResponsed.get(requestId)) {
+        isResponsed.put(requestId, true);
+        index++;
+    }    
 
     msg = msg.replaceAll("\n", "<br/>");
 
@@ -467,8 +474,6 @@ attachFile.addEventListener('click', function(){
     return false;
 });
 
-let isResponsed = new HashMap();
-let retryNum = new HashMap();
 function sendRequest(text, requestId, requestTime) {
     const uri = "chat";
     const xhr = new XMLHttpRequest();
@@ -482,7 +487,7 @@ function sendRequest(text, requestId, requestTime) {
             response = JSON.parse(xhr.responseText);
             console.log("response: " + JSON.stringify(response));
             
-            addReceivedMessage(response.msg)
+            addReceivedMessage(response.request_id, response.msg)
         }
         else if(xhr.readyState ===4 && xhr.status === 504) {
             console.log("response: " + xhr.readyState + ', xhr.status: '+xhr.status);
@@ -522,7 +527,7 @@ function sendRequestForSummary(object, requestId, requestTime) {
             response = JSON.parse(xhr.responseText);
             console.log("response: " + JSON.stringify(response));
             
-            addReceivedMessage(response.msg)
+            addReceivedMessage(response.request_id, response.msg)
         }
         else if(xhr.readyState ===4 && xhr.status === 504) {
             console.log("response: " + xhr.readyState + ', xhr.status: '+xhr.status);
@@ -578,8 +583,8 @@ function sendRequestForRetry(requestId) {
             console.log("response: " + JSON.stringify(response));
                         
             if(response.msg) {
-                isResponsed.put(requestId, true);
-                addReceivedMessage(response.msg);        
+                isResponsed.put(response.request_id, true);
+                addReceivedMessage(response.request_id, response.msg);        
                 
                 console.log('completed!');
             }            
@@ -618,8 +623,9 @@ function getHistory(userId, allowTime) {
                     let timestr = history[i].request_time;
                     let msg = history[i].msg;
                     let body = history[i].body;
+                    let requestId = history[i].request_id;
                     addSentMessage(body, timestr)
-                    addReceivedMessage(msg);                            
+                    addReceivedMessage(requestId, msg);                            
                 }                 
             }         
             if(history.length>=1) {

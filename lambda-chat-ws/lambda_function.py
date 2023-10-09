@@ -428,18 +428,22 @@ def lambda_handler(event, context):
         elif routeKey == '$disconnect':
             print('disconnected!')
         else:
-            body = json.loads(event.get("body", ""))
-            print('body: ', body)
+            print("body[0:8]: ", body[0:8])
+            if body[0:8] == "__ping__":
+                print("ping!.....")
+            else:
+                body = json.loads(event.get("body", ""))
+                print('body: ', body)
 
-            msg = getResponse(connectionId, body)
+                msg = getResponse(connectionId, body)
 
-            requestId  = body['request_id']
-            result = {
-                'request_id': requestId,
-                'msg': msg
-            }
-            print('result: ', json.dumps(result))
-            sendMessage(connectionId, result)
+                requestId  = body['request_id']
+                result = {
+                    'request_id': requestId,
+                    'msg': msg
+                }
+                print('result: ', json.dumps(result))
+                sendMessage(connectionId, result)
 
     return {
         'statusCode': 200
