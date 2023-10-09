@@ -429,7 +429,7 @@ def lambda_handler(event, context):
             print('disconnected!')
         else:
             body = event.get("body", "")
-            print("data[0:8]: ", body[0:8])
+            #print("data[0:8]: ", body[0:8])
             if body[0:8] == "__ping__":
                 print("ping!.....")                
                 sendMessage(connectionId, "__pong__")

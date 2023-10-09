@@ -209,7 +209,7 @@ function onSend(e) {
         let requestTime = datastr+' '+timestr
 
         let requestId = uuidv4();
-        addSentMessage(message.value, requestId, timestr);
+        addSentMessage(requestId, timestr, message.value);
         
         if(protocol == 'WEBSOCKET') {
             sendMessage({
@@ -257,12 +257,13 @@ function getTime(current) {
     return time_map.join(':');
 }
 
-function addSentMessage(text, requestId, timestr) {
+function addSentMessage(requestId, timestr, text) {
     if(!indexList.get(requestId+':send')) {
         indexList.put(requestId+':send', index);             
     }
     else {
         index = indexList.get(requestId+':send');
+        console.log("reused index="+index+', id='+requestId+':send');        
     }
     console.log("index:", index);   
 
@@ -309,7 +310,7 @@ function addSentMessage(text, requestId, timestr) {
     index++;
 }       
 
-function addSentMessageForSummary(text, requestId, timestr) {  
+function addSentMessageForSummary(requestId, timestr, text) {  
     console.log("sent message: "+text);
 
     if(!indexList.get(requestId+':send')) {
@@ -317,6 +318,7 @@ function addSentMessageForSummary(text, requestId, timestr) {
     }
     else {
         index = indexList.get(requestId+':send');
+        console.log("reused index="+index+', id='+requestId+':send');        
     }
     console.log("index:", index);   
 
@@ -343,6 +345,7 @@ function addReceivedMessage(requestId, msg) {
     }
     else {
         index = indexList.get(requestId+':receive');
+        console.log("reused index="+index+', id='+requestId+':receive');        
     }
     console.log("index:", index);   
 
@@ -435,7 +438,7 @@ attachFile.addEventListener('click', function(){
             let timestr = getTime(current);
             let requestTime = datastr+' '+timestr
             let requestId = uuidv4();
-            addSentMessageForSummary("uploading the selected file in order to summerize...", requestId, timestr);
+            addSentMessageForSummary(requestId, timestr, "uploading the selected file in order to summerize...");
 
             const uri = "upload";
             const xhr = new XMLHttpRequest();
@@ -654,13 +657,15 @@ function getHistory(userId, allowTime) {
             for(let i=0; i<history.length; i++) {
                 if(history[i].type=='text') {                
                     // let timestr = history[i].request_time.substring(11, 19);
+                    let requestId = history[i].request_id;
+                    console.log("requestId: ", requestId);
                     let timestr = history[i].request_time;
                     console.log("timestr: ", timestr);
-                    let msg = history[i].msg;
                     let body = history[i].body;
-                    console.log("body: ", body);
-                    let requestId = history[i].request_id;
-                    addSentMessage(body, timestr)
+                    console.log("question: ", body);
+                    let msg = history[i].msg;
+                    console.log("answer: ", msg);
+                    addSentMessage(requestId, timestr, body)
                     addReceivedMessage(requestId, msg);                            
                 }                 
             }         

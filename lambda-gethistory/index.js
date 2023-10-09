@@ -31,12 +31,14 @@ exports.handler = async (event, context) => {
         for(let item of result['Items']) {
             console.log('item: ', item);
             let request_time = item['request_time']['S'];
+            let request_id = item['request_id']['S'];
             let body = item['body']['S'];
             let msg = item['msg']['S'];
             let type = item['type']['S'];
 
             history.push({
                 'request_time': request_time,
+                'request_id': request_id,
                 'type': type,
                 'body': body,
                 'msg': msg,
