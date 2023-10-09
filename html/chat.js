@@ -46,9 +46,10 @@ function connect(endpoint) {
             pong();
             return;
         }
-
-        response = JSON.parse(event.data)
-        addReceivedMessage(response.request_id, response.msg);
+        else {
+            response = JSON.parse(event.data)
+            addReceivedMessage(response.request_id, response.msg);
+        }        
     };
 
     // disconnect

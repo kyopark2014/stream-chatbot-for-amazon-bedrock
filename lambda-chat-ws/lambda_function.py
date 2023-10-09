@@ -266,7 +266,7 @@ def getAllowTime():
 
     return timeStr
 
-def readStreamMsg(connectionId, stream):
+def readStreamMsg(connectionId, requestId, stream):
     msg = ""
     if stream:
         for event in stream:
@@ -358,13 +358,13 @@ def getResponse(connectionId, reqBody):
                         PROMPT = get_prompt_template(text, convType)
                         msg = llm(PROMPT.format(input=text))
 
-                        readStreamMsg(connectionId, msg)
+                        readStreamMsg(connectionId, requestId, msg)
                     else:    
                         conversation.prompt = get_prompt_template(text, convType)
                         stream = conversation.predict(input=text)
                         #print('stream: ', stream)
                         
-                        readStreamMsg(connectionId, stream)
+                        readStreamMsg(connectionId, requestId, stream)
                         
                     # extract chat history for debug
                     chats = chat_memory.load_memory_variables({})
@@ -431,7 +431,8 @@ def lambda_handler(event, context):
             body = event.get("body", "")
             print("data[0:8]: ", body[0:8])
             if body[0:8] == "__ping__":
-                print("ping!.....")
+                print("ping!.....")                
+                sendMessage(connectionId, "__pong__")
             else:
                 json_body = json.loads(body)
                 print('body: ', json_body)
