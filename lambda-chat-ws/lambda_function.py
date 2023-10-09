@@ -60,7 +60,7 @@ def get_parameter(modelId):
         }
     elif modelId == 'anthropic.claude-v1' or modelId == 'anthropic.claude-v2':
         return {
-            "max_tokens_to_sample":1024,
+            "max_tokens_to_sample":10240,
             "temperature":0.1,
             "top_k":250,
             "top_p": 0.9,
@@ -152,7 +152,7 @@ def load_document(file_type, s3_file_name):
     print('length: ', len(new_contents))
 
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=8000,
+        chunk_size=1000,
         chunk_overlap=100,
         separators=["\n\n", "\n", ".", " ", ""],
         length_function = len,

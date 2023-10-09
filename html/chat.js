@@ -33,7 +33,7 @@ function connect(endpoint) {
 
     // connection event
     ws.onopen = function () {
-        console.log('connected...!');
+        console.log('connected...');
         isConnected = true;
 
         setInterval(ping, 57000);  // ping interval: 57 seconds
@@ -50,7 +50,7 @@ function connect(endpoint) {
             response = JSON.parse(event.data)
 
             if(response.request_id) {
-                console.log('received message: ', event.data);
+                console.log('received message: ', response.msg);
                 addReceivedMessage(response.request_id, response.msg);
             }
             else {
@@ -118,14 +118,15 @@ HashMap.prototype = {
 };
 
 let isResponsed = new HashMap();
+let indexList = new HashMap();
 let retryNum = new HashMap();
 
 // message log list
-var msglist = [];
-var maxMsgItems = 200;
-var msgHistory = new HashMap();
-var callee = "AWS";
-var index=0;
+let msglist = [];
+let maxMsgItems = 200;
+let msgHistory = new HashMap();
+let callee = "AWS";
+let index=0;
 
 let userId = localStorage.getItem('userId'); // set userID if exists 
 if(userId=="") {
@@ -155,8 +156,6 @@ for (i=0;i<maxMsgItems;i++) {
 
 calleeName.textContent = "Chatbot";  
 calleeId.textContent = "AWS";
-
-index = 0;
 
 addNotifyMessage("Start chat with Amazon Bedrock");
 
@@ -208,9 +207,10 @@ function onSend(e) {
         let datastr = getDate(current);
         let timestr = getTime(current);
         let requestTime = datastr+' '+timestr
-        addSentMessage(message.value, timestr);
 
         let requestId = uuidv4();
+        addSentMessage(message.value, requestId, timestr);
+        
         if(protocol == 'WEBSOCKET') {
             sendMessage({
                 "user_id": userId,
@@ -257,8 +257,14 @@ function getTime(current) {
     return time_map.join(':');
 }
 
-function addSentMessage(text, timestr) {
-    index++;
+function addSentMessage(text, requestId, timestr) {
+    if(!indexList.get(requestId+':send')) {
+        indexList.put(requestId+':send', index);             
+    }
+    else {
+        index = indexList.get(requestId+':send');
+    }
+    console.log("index:", index);   
 
     var length = text.length;    
     console.log('length: ', length);
@@ -300,11 +306,19 @@ function addSentMessage(text, timestr) {
     }     
 
     chatPanel.scrollTop = chatPanel.scrollHeight;  // scroll needs to move bottom
+    index++;
 }       
 
-function addSentMessageForSummary(text, timestr) {  
+function addSentMessageForSummary(text, requestId, timestr) {  
     console.log("sent message: "+text);
-    index++;
+
+    if(!indexList.get(requestId+':send')) {
+        indexList.put(requestId+':send', index);             
+    }
+    else {
+        index = indexList.get(requestId+':send');
+    }
+    console.log("index:", index);   
 
     let length = text.length;
     if(length < 100) {
@@ -317,16 +331,25 @@ function addSentMessageForSummary(text, timestr) {
     }   
 
     chatPanel.scrollTop = chatPanel.scrollHeight;  // scroll needs to move bottom
+    index++;
 }  
 
 function addReceivedMessage(requestId, msg) {
     // console.log("add received message: "+msg);
     sender = "Chatbot"
+    
+    if(!indexList.get(requestId+':receive')) {
+        indexList.put(requestId+':receive', index);             
+    }
+    else {
+        index = indexList.get(requestId+':receive');
+    }
+    console.log("index:", index);   
 
-    if(!isResponsed.get(requestId)) {
-        isResponsed.put(requestId, true);
-        index++;
-    }    
+    //if(!isResponsed.get(requestId)) {
+    //    isResponsed.put(requestId, true);
+    //    index++;
+    //}    
 
     msg = msg.replaceAll("\n", "<br/>");
 
@@ -362,13 +385,16 @@ function addReceivedMessage(requestId, msg) {
     }
      
     chatPanel.scrollTop = chatPanel.scrollHeight;  // scroll needs to move bottom
+    index++;
 }
 
 function addNotifyMessage(msg) {
-    index++;
+    console.log("index:", index);   
 
     msglist[index].innerHTML =  
         `<div class="notification-text">${msg}</div>`;     
+
+    index++;
 }
 
 refreshChatWindow.addEventListener('click', function(){
@@ -408,7 +434,8 @@ attachFile.addEventListener('click', function(){
             let datastr = getDate(current);
             let timestr = getTime(current);
             let requestTime = datastr+' '+timestr
-            addSentMessageForSummary("uploading the selected file in order to summerize...", timestr);
+            let requestId = uuidv4();
+            addSentMessageForSummary("uploading the selected file in order to summerize...", requestId, timestr);
 
             const uri = "upload";
             const xhr = new XMLHttpRequest();
@@ -439,8 +466,7 @@ attachFile.addEventListener('click', function(){
                         if (xmlHttp.readyState == XMLHttpRequest.DONE && xmlHttp.status == 200 ) {
                             console.log(xmlHttp.responseText);
                                            
-                            // summary for the upload file
-                            let requestId = uuidv4();
+                            // summary for the upload file                            
                             if(protocol == 'WEBSOCKET') {
                                 sendMessage({
                                     "user_id": userId,
@@ -623,14 +649,16 @@ function getHistory(userId, allowTime) {
         if (xhr.readyState === 4 && xhr.status === 200) {
             let response = JSON.parse(xhr.responseText);
             let history = JSON.parse(response['msg']);
-            // console.log("history: " + JSON.stringify(history));
+            console.log("history: " + JSON.stringify(history));
                         
             for(let i=0; i<history.length; i++) {
                 if(history[i].type=='text') {                
                     // let timestr = history[i].request_time.substring(11, 19);
                     let timestr = history[i].request_time;
+                    console.log("timestr: ", timestr);
                     let msg = history[i].msg;
                     let body = history[i].body;
+                    console.log("body: ", body);
                     let requestId = history[i].request_id;
                     addSentMessage(body, timestr)
                     addReceivedMessage(requestId, msg);                            
