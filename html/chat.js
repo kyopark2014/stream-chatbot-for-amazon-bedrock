@@ -22,6 +22,7 @@ function ping() {
     webSocket.send('__ping__');
     tm = setTimeout(function () {
        /// ---connection closed ///
+       webSocket.close();
     }, 5000);
 }
 function pong() {
@@ -348,11 +349,6 @@ function addReceivedMessage(requestId, msg) {
         console.log("reused index="+index+', id='+requestId+':receive');        
     }
     console.log("index:", index);   
-
-    //if(!isResponsed.get(requestId)) {
-    //    isResponsed.put(requestId, true);
-    //    index++;
-    //}    
 
     msg = msg.replaceAll("\n", "<br/>");
 
