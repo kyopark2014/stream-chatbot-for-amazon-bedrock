@@ -60,7 +60,7 @@ def get_parameter(modelId):
         }
     elif modelId == 'anthropic.claude-v1' or modelId == 'anthropic.claude-v2':
         return {
-            "max_tokens_to_sample":10240,
+            "max_tokens_to_sample":92160, # 90k
             "temperature":0.1,
             "top_k":250,
             "top_p": 0.9,
