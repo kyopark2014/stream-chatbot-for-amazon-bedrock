@@ -437,6 +437,7 @@ def lambda_handler(event, context):
                 jsonBody = json.loads(body)
                 print('body: ', jsonBody)
 
+                requestId  = jsonBody['request_id']
                 try:
                     msg = getResponse(connectionId, jsonBody)
                 except: 
@@ -446,8 +447,7 @@ def lambda_handler(event, context):
                     }
                     sendMessage(connectionId, result)
                     raise Exception ("Not able to send a message")
-                    
-                requestId  = jsonBody['request_id']
+                                    
                 result = {
                     'request_id': requestId,
                     'msg': msg
