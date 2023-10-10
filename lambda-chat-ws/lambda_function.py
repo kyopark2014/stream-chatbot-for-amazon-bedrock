@@ -6,7 +6,7 @@ import datetime
 from io import BytesIO
 import PyPDF2
 import csv
-import sys
+import sys, traceback
 import re
 import base64
 
@@ -440,10 +440,11 @@ def lambda_handler(event, context):
                 requestId  = jsonBody['request_id']
                 try:
                     msg = getResponse(connectionId, jsonBody)
-                except: 
+                except Exception as ex:
+                    err_msg = traceback.format_exc()
                     result = {
                         'request_id': requestId,
-                        'msg': "The request was failed by the system error"
+                        'msg': "The request was failed by the system error: "+err_msg
                     }
                     sendMessage(connectionId, result)
                     raise Exception ("Not able to send a message")
