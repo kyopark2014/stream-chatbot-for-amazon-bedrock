@@ -444,7 +444,7 @@ def lambda_handler(event, context):
                     err_msg = traceback.format_exc()
                     result = {
                         'request_id': requestId,
-                        'msg': "The request was failed by the system error: "+err_msg
+                        'msg': "The request was failed by the system: "+err_msg
                     }
                     sendMessage(connectionId, result)
                     raise Exception ("Not able to send a message")
