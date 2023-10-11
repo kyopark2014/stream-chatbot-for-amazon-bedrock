@@ -47,10 +47,15 @@ def sendMessage(id, body):
 boto3_bedrock = boto3.client(
     service_name='bedrock-runtime',
     region_name=bedrock_region,
+    #config=Config(
+    #    retries = dict(
+    #        max_attempts = 3
+    #    )
+    #)
     config=Config(
-        retries = dict(
-            max_attempts = 3
-        )
+        retries = {
+            'max_attempts': 3
+        }            
     )
 )
 
