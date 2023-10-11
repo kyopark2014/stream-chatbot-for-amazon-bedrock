@@ -48,10 +48,9 @@ boto3_bedrock = boto3.client(
     service_name='bedrock-runtime',
     region_name=bedrock_region,
     config=Config(
-        retries={
-            "max_attempts": 8,
-            "mode": "standard",
-        }
+        retries = dict(
+            max_attempts = 10
+        )
     )
 )
 
