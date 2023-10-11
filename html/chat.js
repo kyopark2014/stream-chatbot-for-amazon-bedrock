@@ -10,8 +10,7 @@ if(protocol == 'WEBSOCKET') {
 function sendMessage(message) {
     if(!isConnected) {
         webSocket.close();
-        webSocket = connect(endpoint);
-
+        
         if(langstate=='korean') {
             addNotifyMessage("재연결중입니다. 잠시후 다시시도하세요.");
         }
