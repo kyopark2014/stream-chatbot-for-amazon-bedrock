@@ -49,7 +49,7 @@ boto3_bedrock = boto3.client(
     region_name=bedrock_region,
     config=Config(
         retries = dict(
-            max_attempts = 10
+            max_attempts = 3
         )
     )
 )
