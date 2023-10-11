@@ -9,6 +9,7 @@ if(protocol == 'WEBSOCKET') {
 
 function sendMessage(message) {
     if(!isConnected) {
+        webSocket.close();
         webSocket = connect(endpoint);
     }
 

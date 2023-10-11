@@ -18,6 +18,7 @@ from langchain.llms.bedrock import Bedrock
 from langchain.chains import ConversationChain
 from langchain.memory import ConversationBufferMemory
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+from botocore.config import Config
 
 s3 = boto3.client('s3')
 s3_bucket = os.environ.get('s3_bucket') # bucket name
@@ -46,6 +47,12 @@ def sendMessage(id, body):
 boto3_bedrock = boto3.client(
     service_name='bedrock-runtime',
     region_name=bedrock_region,
+    config=Config(
+        retries={
+            "max_attempts": 8,
+            "mode": "standard",
+        }
+    )
 )
 
 HUMAN_PROMPT = "\n\nHuman:"
@@ -67,6 +74,7 @@ def get_parameter(modelId):
             "stop_sequences": [HUMAN_PROMPT]            
         }
 parameters = get_parameter(modelId)
+
 
 # langchain for bedrock
 llm = Bedrock(
