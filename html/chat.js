@@ -1,6 +1,6 @@
 const protocol = 'WEBSOCKET'; // WEBSOCKET or HTTP
 const endpoint = 'wss://etl2hxx4la.execute-api.ap-northeast-1.amazonaws.com/dev';
-
+const langstate = 'korean'; // korean or english
 let webSocket
 let isConnected = false;
 if(protocol == 'WEBSOCKET') {
@@ -22,8 +22,8 @@ function ping() {
     console.log('->ping');
     webSocket.send('__ping__');
     tm = setTimeout(function () {
-       /// ---connection closed ///
-       webSocket.close();
+        console.log('reconnect...');    
+        webSocket = connect(endpoint);
     }, 5000);
 }
 function pong() {
@@ -159,9 +159,17 @@ for (i=0;i<maxMsgItems;i++) {
 calleeName.textContent = "Chatbot";  
 calleeId.textContent = "AWS";
 
-addNotifyMessage("Start chat with Amazon Bedrock");
 
-addReceivedMessage(uuidv4(), "Welcome to Amazon Bedrock. Use the conversational chatbot and summarize documents, TXT, PDF, and CSV. ")
+if(langstate=='korean') {
+    addNotifyMessage("아마존 배드락을 이용한 채팅을 시작합니다.");
+    addReceivedMessage(uuidv4(), "아마존 베드락을 이용하여 주셔서 감사합니다. 편안한 대화를 즐기실수 있으며, 파일을 업로드하면 요약을 할 수 있습니다.")
+}
+else {
+    addNotifyMessage("Start chat with Amazon Bedrock");             
+    addReceivedMessage(uuidv4(), "Welcome to Amazon Bedrock. Use the conversational chatbot and summarize documents, TXT, PDF, and CSV. ")           
+}
+
+
 
 // get history
 function getAllowTime() {    
@@ -667,7 +675,12 @@ function getHistory(userId, allowTime) {
                 }                 
             }         
             if(history.length>=1) {
-                addNotifyMessage("Welcome back to the conversation");               
+                if(langstate=='korean') {
+                    addNotifyMessage("대화를 다시 재개하였습니다.");
+                }
+                else {
+                    addNotifyMessage("Welcome back to the conversation");                               
+                }
                 chatPanel.scrollTop = chatPanel.scrollHeight;  // scroll needs to move bottom
             }
         }
