@@ -97,3 +97,17 @@ def sendMessage(id, body):
     except: 
         raise Exception ("Not able to send a message")
 ```
+
+## 직접 실습 해보기
+
+### 사전 준비 사항
+
+이 솔루션을 사용하기 위해서는 사전에 아래와 같은 준비가 되어야 합니다.
+
+- [AWS Account 생성](https://repost.aws/ko/knowledge-center/create-and-activate-aws-account)
+
+
+### CDK를 이용한 인프라 설치
+[인프라 설치](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/blob/main/deployment.md)에 따라 CDK로 인프라 설치를 진행합니다. 
+
+
