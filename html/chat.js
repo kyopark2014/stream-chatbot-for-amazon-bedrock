@@ -4,13 +4,13 @@ const langstate = 'korean'; // korean or english
 let webSocket
 let isConnected = false;
 if(protocol == 'WEBSOCKET') {
-    webSocket = connect(endpoint);
+    webSocket = connect(endpoint, 'initial');
 }
 
 function sendMessage(message) {
     if(!isConnected) {
-        clearTimeout(ti);
-        webSocket = connect(endpoint);
+        console.log('reconnect...'); 
+        webSocket = connect(endpoint, 'reconnect');
         
         if(langstate=='korean') {
             addNotifyMessage("재연결중입니다. 잠시후 다시시도하세요.");
@@ -19,27 +19,27 @@ function sendMessage(message) {
             addNotifyMessage("We are connecting again. Please wait a few seconds.");                        
         }
     }
-
-    webSocket.send(JSON.stringify(message));     
-    console.log('message: ', message);    
+    else {
+        webSocket.send(JSON.stringify(message));     
+        console.log('message: ', message);   
+    }     
 }
 
-let tm, ti;
+let tm;
 function ping() {
     console.log('->ping');
     webSocket.send('__ping__');
     tm = setTimeout(function () {
         console.log('reconnect...');    
         
-        clearTimeout(ti);
-        webSocket = connect(endpoint);
+        webSocket = connect(endpoint, 'reconnect');
     }, 5000);
 }
 function pong() {
     clearTimeout(tm);
 }
 
-function connect(endpoint) {
+function connect(endpoint, type) {
     const ws = new WebSocket(endpoint);
 
     // connection event
@@ -47,7 +47,8 @@ function connect(endpoint) {
         console.log('connected...');
         isConnected = true;
 
-        ti = setInterval(ping, 57000);  // ping interval: 57 seconds
+        if(type == 'initial')
+            setInterval(ping, 57000);  // ping interval: 57 seconds
     };
 
     // message 
@@ -170,7 +171,7 @@ calleeId.textContent = "AWS";
 
 
 if(langstate=='korean') {
-    addNotifyMessage("아마존 배드락을 이용한 채팅을 시작합니다.");
+    addNotifyMessage("Amazon Bedrock을 이용하여 채팅을 시작합니다.");
     addReceivedMessage(uuidv4(), "아마존 베드락을 이용하여 주셔서 감사합니다. 편안한 대화를 즐기실수 있으며, 파일을 업로드하면 요약을 할 수 있습니다.")
 }
 else {
@@ -412,6 +413,8 @@ function addNotifyMessage(msg) {
         `<div class="notification-text">${msg}</div>`;     
 
     index++;
+
+    chatPanel.scrollTop = chatPanel.scrollHeight;  // scroll needs to move bottom
 }
 
 refreshChatWindow.addEventListener('click', function(){
@@ -685,7 +688,7 @@ function getHistory(userId, allowTime) {
             }         
             if(history.length>=1) {
                 if(langstate=='korean') {
-                    addNotifyMessage("대화를 다시 재개하였습니다.");
+                    addNotifyMessage("대화를 다시 시작하였습니다.");
                 }
                 else {
                     addNotifyMessage("Welcome back to the conversation");                               
