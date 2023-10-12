@@ -58,3 +58,16 @@ cdk deploy --all
 9) 설치가 완료되면 브라우저에서 아래와 같이 WebUrl를 확인하여 브라우저를 이용하여 접속합니다.
 
 ![noname](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/c2261bd4-1dcf-460d-bfed-a80780f396e8)
+
+10) 아래와 같이 webSocketUrl을 확인합니다. 여기서는 "wss://etl2hxx4la.execute-api.ap-northeast-1.amazonaws.com/dev" 입니다.
+
+![noname](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/12d900e6-ec6c-40de-b867-284612ecbb4f)
+
+11) 아래와 같이 "/html/chat.js"파일을 열어서, endpoint를 업데이트합니다.
+
+![noname](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/99e03119-e8f8-4961-ab13-6f9bb149acbe)
+
+12) 아래와 같이 "UpdateCommendforstreamchatbotsimple"에 있는 "aws s3 cp ../html/chat.js s3://storage-for-stream-chatbot-simple-ap-northeast-1"을 터미널에서 입력하거나, 재설치를 수행합니다.
+
+![noname](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/04e72e5f-7f99-440e-a111-c50fad988b3c)
+
