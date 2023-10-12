@@ -67,7 +67,10 @@ cdk deploy --all
 
 ![noname](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/99e03119-e8f8-4961-ab13-6f9bb149acbe)
 
-12) 아래와 같이 "UpdateCommendforstreamchatbotsimple"에 있는 "aws s3 cp ../html/chat.js s3://storage-for-stream-chatbot-simple-ap-northeast-1"을 터미널에서 입력하거나, 재설치를 수행합니다.
+12) 아래와 같이 "UpdateCommendforstreamchatbotsimple"에 있는 명령어를 확인합니다.
 
 ![noname](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/04e72e5f-7f99-440e-a111-c50fad988b3c)
 
+아래와 같이 명령어를 입력합니다. 여기서는 "aws s3 cp ../html/chat.js s3://storage-for-stream-chatbot-simple-ap-northeast-1"를 이용합니다.
+
+![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/bf9e0d0a-cdc8-4931-8a20-182a89aded06)
