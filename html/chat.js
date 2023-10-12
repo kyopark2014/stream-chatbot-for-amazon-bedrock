@@ -9,7 +9,8 @@ if(protocol == 'WEBSOCKET') {
 
 function sendMessage(message) {
     if(!isConnected) {
-        webSocket.close();
+        clearTimeout(ti);
+        webSocket = connect(endpoint);
         
         if(langstate=='korean') {
             addNotifyMessage("재연결중입니다. 잠시후 다시시도하세요.");
@@ -23,12 +24,14 @@ function sendMessage(message) {
     console.log('message: ', message);    
 }
 
-let tm
+let tm, ti;
 function ping() {
     console.log('->ping');
     webSocket.send('__ping__');
     tm = setTimeout(function () {
         console.log('reconnect...');    
+        
+        clearTimeout(ti);
         webSocket = connect(endpoint);
     }, 5000);
 }
@@ -44,7 +47,7 @@ function connect(endpoint) {
         console.log('connected...');
         isConnected = true;
 
-        setInterval(ping, 57000);  // ping interval: 57 seconds
+        ti = setInterval(ping, 57000);  // ping interval: 57 seconds
     };
 
     // message 
