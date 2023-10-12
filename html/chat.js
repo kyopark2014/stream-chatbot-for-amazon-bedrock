@@ -245,9 +245,6 @@ function onSend(e) {
             sendRequest(message.value, requestId, requestTime);
         }            
     }
-    else {
-        console.log("msg: ", "empty!");
-    }    
     message.value = "";
 
     chatPanel.scrollTop = chatPanel.scrollHeight;  // scroll needs to move bottom
@@ -493,7 +490,7 @@ attachFile.addEventListener('click', function(){
                                     "request_id": requestId,
                                     "request_time": requestTime,
                                     "type": "document",
-                                    "body": message.value,
+                                    "body": filename,
                                     "convType": conversationType
                                 })
                             }
