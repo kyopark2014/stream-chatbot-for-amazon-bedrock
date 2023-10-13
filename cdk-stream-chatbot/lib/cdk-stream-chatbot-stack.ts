@@ -61,6 +61,12 @@ export class CdkStreamChatbotStack extends cdk.Stack {
       });
     }
 
+    // copy web application files into s3 bucket
+    new s3Deploy.BucketDeployment(this, `upload-HTML-for-${projectName}`, {
+      sources: [s3Deploy.Source.asset("../html")],
+      destinationBucket: s3Bucket,
+    });
+
     // DynamoDB for call log
     const callLogTableName = `db-call-log-for-${projectName}`;
     const callLogDataTable = new dynamodb.Table(this, `db-call-log-for-${projectName}`, {
@@ -76,27 +82,7 @@ export class CdkStreamChatbotStack extends cdk.Stack {
       partitionKey: { name: 'request_id', type: dynamodb.AttributeType.STRING },
     });
 
-    // copy web application files into s3 bucket
-    new s3Deploy.BucketDeployment(this, `upload-HTML-for-${projectName}`, {
-      sources: [s3Deploy.Source.asset("../html")],
-      destinationBucket: s3Bucket,
-    });
-
-    // cloudfront
-    const distribution = new cloudFront.Distribution(this, `cloudfront-for-${projectName}`, {
-      defaultBehavior: {
-        origin: new origins.S3Origin(s3Bucket),
-        allowedMethods: cloudFront.AllowedMethods.ALLOW_ALL,
-        cachePolicy: cloudFront.CachePolicy.CACHING_DISABLED,
-        viewerProtocolPolicy: cloudFront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-      },
-      priceClass: cloudFront.PriceClass.PRICE_CLASS_200,  
-    });
-    new cdk.CfnOutput(this, `distributionDomainName-for-${projectName}`, {
-      value: distribution.domainName,
-      description: 'The domain name of the Distribution',
-    });
-
+    // Role of lambda-chat
     const roleLambda = new iam.Role(this, `role-lambda-chat-for-${projectName}`, {
       roleName: `role-lambda-chat-for-${projectName}-${region}`,
       assumedBy: new iam.CompositePrincipal(
@@ -117,7 +103,7 @@ export class CdkStreamChatbotStack extends cdk.Stack {
       }),
     );      
 
-    // Lambda for chat using langchain (container)
+    // lambda-chat (container)
     const lambdaChatApi = new lambda.DockerImageFunction(this, `lambda-chat-for-${projectName}`, {
       description: 'lambda for chat api',
       functionName: `lambda-chat-api-for-${projectName}`,
@@ -137,7 +123,7 @@ export class CdkStreamChatbotStack extends cdk.Stack {
     s3Bucket.grantRead(lambdaChatApi); // permission for s3
     callLogDataTable.grantReadWriteData(lambdaChatApi); // permission for dynamo
     
-    // role
+    // role of api gateway
     const role = new iam.Role(this, `api-role-for-${projectName}`, {
       roleName: `api-role-for-${projectName}-${region}`,
       assumedBy: new iam.ServicePrincipal("apigateway.amazonaws.com")
@@ -198,23 +184,6 @@ export class CdkStreamChatbotStack extends cdk.Stack {
       }); 
     }
 
-    // cloudfront setting 
-    distribution.addBehavior("/chat", new origins.RestApiOrigin(api), {
-      cachePolicy: cloudFront.CachePolicy.CACHING_DISABLED,
-      allowedMethods: cloudFront.AllowedMethods.ALLOW_ALL,  
-      viewerProtocolPolicy: cloudFront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-    });    
-   
-    new cdk.CfnOutput(this, `WebUrl-for-${projectName}`, {
-      value: 'https://'+distribution.domainName+'/index.html',      
-      description: 'The web url of request for chat',
-    });
-
-    new cdk.CfnOutput(this, `UpdateCommend-for-${projectName}`, {
-      value: 'aws s3 cp ../html/chat.js '+'s3://'+s3Bucket.bucketName,
-      description: 'The url of web file upload',
-    });
-
     // Lambda - Upload
     const lambdaUpload = new lambda.Function(this, `lambda-upload-for-${projectName}`, {
       runtime: lambda.Runtime.NODEJS_16_X, 
@@ -256,14 +225,7 @@ export class CdkStreamChatbotStack extends cdk.Stack {
         description: 'The url of API Gateway',
       }); 
     }
-
-    // cloudfront setting  
-    distribution.addBehavior("/upload", new origins.RestApiOrigin(api), {
-      cachePolicy: cloudFront.CachePolicy.CACHING_DISABLED,
-      allowedMethods: cloudFront.AllowedMethods.ALLOW_ALL,  
-      viewerProtocolPolicy: cloudFront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-    });    
-
+    
     // Lambda - queryResult
     const lambdaQueryResult = new lambda.Function(this, `lambda-query-for-${projectName}`, {
       runtime: lambda.Runtime.NODEJS_16_X, 
@@ -297,14 +259,7 @@ export class CdkStreamChatbotStack extends cdk.Stack {
           }, 
         }
       ]
-    }); 
-
-    // cloudfront setting for api gateway    
-    distribution.addBehavior("/query", new origins.RestApiOrigin(api), {
-      cachePolicy: cloudFront.CachePolicy.CACHING_DISABLED,
-      allowedMethods: cloudFront.AllowedMethods.ALLOW_ALL,  
-      viewerProtocolPolicy: cloudFront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-    });
+    });     
 
     // Lambda - getHistory
     const lambdaGetHistory = new lambda.Function(this, `lambda-gethistory-for-${projectName}`, {
@@ -340,13 +295,6 @@ export class CdkStreamChatbotStack extends cdk.Stack {
       ]
     }); 
 
-    // cloudfront setting for api gateway    
-    distribution.addBehavior("/history", new origins.RestApiOrigin(api), {
-      cachePolicy: cloudFront.CachePolicy.CACHING_DISABLED,
-      allowedMethods: cloudFront.AllowedMethods.ALLOW_ALL,  
-      viewerProtocolPolicy: cloudFront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-    });
-
     // Lambda - deleteItems
     const lambdaDeleteItems = new lambda.Function(this, `lambda-deleteItems-for-${projectName}`, {
       runtime: lambda.Runtime.NODEJS_16_X, 
@@ -381,15 +329,7 @@ export class CdkStreamChatbotStack extends cdk.Stack {
       ]
     }); 
 
-    // cloudfront setting for api gateway    
-    distribution.addBehavior("/delete", new origins.RestApiOrigin(api), {
-      cachePolicy: cloudFront.CachePolicy.CACHING_DISABLED,
-      allowedMethods: cloudFront.AllowedMethods.ALLOW_ALL,  
-      viewerProtocolPolicy: cloudFront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-    });
-
-    // stream api gateway
-    // API Gateway
+    // API Gateway for stream
     const websocketapi = new apigatewayv2.CfnApi(this, `ws-api-for-${projectName}`, {
       description: 'API Gateway for chatbot using websocket',
       apiKeySelectionExpression: "$request.header.x-api-key",
@@ -398,30 +338,26 @@ export class CdkStreamChatbotStack extends cdk.Stack {
       routeSelectionExpression: "$request.body.action",     
     });  
     websocketapi.applyRemovalPolicy(cdk.RemovalPolicy.DESTROY); // DESTROY, RETAIN
-
-    new cdk.CfnOutput(this, 'api-identifier', {
-      value: websocketapi.attrApiId,
-      description: 'The API identifier.',
-    });
-
+    if(debug) {
+      new cdk.CfnOutput(this, 'api-identifier', {
+        value: websocketapi.attrApiId,
+        description: 'The API identifier.',
+      });
+    }    
     const wss_url = `wss://${websocketapi.attrApiId}.execute-api.${region}.amazonaws.com/${stage}`;
     new cdk.CfnOutput(this, 'web-socket-url', {
-      value: wss_url,
-      
+      value: wss_url,      
       description: 'The URL of Web Socket',
-    });
-
+    });    
     const connection_url = `https://${websocketapi.attrApiId}.execute-api.${region}.amazonaws.com/${stage}`;
-    new cdk.CfnOutput(this, 'connection-url', {
-      value: connection_url,
-      
-      description: 'The URL of connection',
-    });
-
+    if(debug) {
+      new cdk.CfnOutput(this, 'connection-url', {
+        value: connection_url,      
+        description: 'The URL of connection',
+      });
+    }
     
-    
-
-    // Lambda - chat (websocket)
+    // Role of lambda-chat-ws 
     const roleLambdaWebsocket = new iam.Role(this, `role-lambda-chat-ws-for-${projectName}`, {
       roleName: `role-lambda-chat-ws-for-${projectName}-${region}`,
       assumedBy: new iam.CompositePrincipal(
@@ -437,7 +373,6 @@ export class CdkStreamChatbotStack extends cdk.Stack {
         statements: [BedrockPolicy],
       }),
     );        
-
     const apiInvokePolicy = new iam.PolicyStatement({ 
       // resources: ['arn:aws:execute-api:*:*:*'],
       resources: ['*'],
@@ -452,21 +387,7 @@ export class CdkStreamChatbotStack extends cdk.Stack {
       }),
     );  
    
-    /* const lambdaChatWebsocket = new lambda.Function(this, `lambda-websocket-for-${projectName}`, {
-      description: 'lambda for websocket in order to test the connection of websocket ',
-      functionName: `lambda-websocket-for-${projectName}`,
-      handler: 'lambda_function.lambda_handler',
-      runtime: lambda.Runtime.PYTHON_3_11,
-      code: lambda.Code.fromAsset(path.join(__dirname, '../../lambda-websocket')),
-      timeout: cdk.Duration.seconds(120),
-      logRetention: logs.RetentionDays.ONE_DAY,
-      role: roleLambdaWebsocket,
-      environment: {
-        connection_url: connection_url
-      }
-    });
-    lambdaChatWebsocket.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));  */
-
+    // lambda-chat-ws
     const lambdaChatWebsocket = new lambda.DockerImageFunction(this, `lambda-chat-ws-for-${projectName}`, {
       description: 'lambda for chat using websocket',
       functionName: `lambda-chat-ws-for-${projectName}`,
@@ -487,10 +408,12 @@ export class CdkStreamChatbotStack extends cdk.Stack {
     s3Bucket.grantRead(lambdaChatWebsocket); // permission for s3
     callLogDataTable.grantReadWriteData(lambdaChatWebsocket); // permission for dynamo 
     
-    new cdk.CfnOutput(this, 'function-chat-ws-arn', {
-      value: lambdaChatWebsocket.functionArn,
-      description: 'The arn of lambda webchat.',
-    }); 
+    if(debug) {
+      new cdk.CfnOutput(this, 'function-chat-ws-arn', {
+        value: lambdaChatWebsocket.functionArn,
+        description: 'The arn of lambda webchat.',
+      }); 
+    }    
     
     const integrationUri = `arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${lambdaChatWebsocket.functionArn}/invocations`;    
     const cfnIntegration = new apigatewayv2.CfnIntegration(this, `api-integration-for-${projectName}`, {
@@ -501,7 +424,6 @@ export class CdkStreamChatbotStack extends cdk.Stack {
       description: 'Integration for connect',
       integrationUri: integrationUri,
     });  
-
     new apigatewayv2.CfnRoute(this, `api-route-for-${projectName}-connect`, {
       apiId: websocketapi.attrApiId,
       routeKey: "$connect", 
@@ -510,7 +432,6 @@ export class CdkStreamChatbotStack extends cdk.Stack {
       operationName: 'connect',
       target: `integrations/${cfnIntegration.ref}`,      
     }); 
-
     new apigatewayv2.CfnRoute(this, `api-route-for-${projectName}-disconnect`, {
       apiId: websocketapi.attrApiId,
       routeKey: "$disconnect", 
@@ -519,7 +440,6 @@ export class CdkStreamChatbotStack extends cdk.Stack {
       operationName: 'disconnect',
       target: `integrations/${cfnIntegration.ref}`,      
     }); 
-
     new apigatewayv2.CfnRoute(this, `api-route-for-${projectName}-default`, {
       apiId: websocketapi.attrApiId,
       routeKey: "$default", 
@@ -528,14 +448,69 @@ export class CdkStreamChatbotStack extends cdk.Stack {
       operationName: 'default',
       target: `integrations/${cfnIntegration.ref}`,      
     }); 
-
     new apigatewayv2.CfnStage(this, `api-stage-for-${projectName}`, {
       apiId: websocketapi.attrApiId,
       stageName: stage
     }); 
 
+    // cloudfront
+    const distribution = new cloudFront.Distribution(this, `cloudfront-for-${projectName}`, {
+      defaultBehavior: {
+        origin: new origins.S3Origin(s3Bucket),
+        allowedMethods: cloudFront.AllowedMethods.ALLOW_ALL,
+        cachePolicy: cloudFront.CachePolicy.CACHING_DISABLED,
+        viewerProtocolPolicy: cloudFront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+      },
+      priceClass: cloudFront.PriceClass.PRICE_CLASS_200,  
+    });
+    new cdk.CfnOutput(this, `distributionDomainName-for-${projectName}`, {
+      value: distribution.domainName,
+      description: 'The domain name of the Distribution',
+    });
+    distribution.addBehavior("/chat", new origins.RestApiOrigin(api), {
+      cachePolicy: cloudFront.CachePolicy.CACHING_DISABLED,
+      allowedMethods: cloudFront.AllowedMethods.ALLOW_ALL,  
+      viewerProtocolPolicy: cloudFront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+    });    
+    distribution.addBehavior("/upload", new origins.RestApiOrigin(api), {
+      cachePolicy: cloudFront.CachePolicy.CACHING_DISABLED,
+      allowedMethods: cloudFront.AllowedMethods.ALLOW_ALL,  
+      viewerProtocolPolicy: cloudFront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+    });    
+    distribution.addBehavior("/query", new origins.RestApiOrigin(api), {
+      cachePolicy: cloudFront.CachePolicy.CACHING_DISABLED,
+      allowedMethods: cloudFront.AllowedMethods.ALLOW_ALL,  
+      viewerProtocolPolicy: cloudFront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+    });
+    distribution.addBehavior("/history", new origins.RestApiOrigin(api), {
+      cachePolicy: cloudFront.CachePolicy.CACHING_DISABLED,
+      allowedMethods: cloudFront.AllowedMethods.ALLOW_ALL,  
+      viewerProtocolPolicy: cloudFront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+    });
+    distribution.addBehavior("/delete", new origins.RestApiOrigin(api), {
+      cachePolicy: cloudFront.CachePolicy.CACHING_DISABLED,
+      allowedMethods: cloudFront.AllowedMethods.ALLOW_ALL,  
+      viewerProtocolPolicy: cloudFront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+    });   
+
+    new cdk.CfnOutput(this, `WebUrl-for-${projectName}`, {
+      value: 'https://'+distribution.domainName+'/index.html',      
+      description: 'The web url of request for chat',
+    });
+    new cdk.CfnOutput(this, `UpdateCommend-for-${projectName}`, {
+      value: 'aws s3 cp ../html/chat.js '+'s3://'+s3Bucket.bucketName,
+      description: 'The url of web file upload',
+    });
+
+    // deployment of apl gateway2 (websocket)
+    new apigatewayv2.CfnDeployment(this, `api-deployment-for-${projectName}`, {
+      apiId: websocketapi.attrApiId,
+      description: "deploy api gateway using websocker",  // $default
+      stageName: stage
+    });   
+
     // deploy components
-    new componentDeployment(scope, "deployment-stream-chatbot-simple", websocketapi.attrApiId)  
+    // new componentDeployment(scope, "deployment-stream-chatbot-simple", websocketapi.attrApiId)  
 
     //const wsOriginRequestPolicy = new cloudFront.OriginRequestPolicy(this, `webSocketPolicy`, {
     //  originRequestPolicyName: "webSocketPolicy",
@@ -554,7 +529,7 @@ export class CdkStreamChatbotStack extends cdk.Stack {
   }
 }
 
-export class componentDeployment extends cdk.Stack {
+/*export class componentDeployment extends cdk.Stack {
   constructor(scope: Construct, id: string, appId: string, props?: cdk.StackProps) {    
     super(scope, id, props);
 
@@ -564,4 +539,4 @@ export class componentDeployment extends cdk.Stack {
       stageName: stage
     });   
   }
-} 
+} */
