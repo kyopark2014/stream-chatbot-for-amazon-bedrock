@@ -33,7 +33,7 @@ git clone https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock
 5) cdk 폴더로 이동하여 필요한 라이브러리를 설치합니다.
 
 ```java
-cd stream-chatbot-for-amazon-bedrock/cdk-stream-chatbot-stack/ && npm install
+cd stream-chatbot-for-amazon-bedrock/cdk-stream-chatbot/ && npm install
 ```
 
 7) CDK 사용을 위해 Boostraping을 수행합니다.
