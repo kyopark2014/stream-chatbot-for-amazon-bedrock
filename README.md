@@ -104,7 +104,7 @@ llm = Bedrock(
     model_kwargs=parameters)
 ```
 
-채팅이력은 [ConversationBufferMemory](https://api.python.langchain.com/en/latest/memory/langchain.memory.buffer.ConversationBufferMemory.html)을 이용하여 chat_memory로 설정한 후에 ConversationChain을 정의하여 사용합니다.
+채팅이력은 [ConversationBufferMemory](https://api.python.langchain.com/en/latest/memory/langchain.memory.buffer.ConversationBufferMemory.html)을 이용하여 chat_memory으로 저장합니다.
 
 ```python
 from langchain.memory import ConversationBufferMemory
