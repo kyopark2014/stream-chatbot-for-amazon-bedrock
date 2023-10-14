@@ -4,10 +4,10 @@
 
 Stream 방식은 하나의 요청에 여러번의 응답을 얻게 되므로, HTTP 방식보다는 세션을 통해 메시지를 교환하는 Websocket 방식이 유용합니다. 또한 서버리스(serverless) 아키텍처를 사용하면 인프라의 유지보수에 대한 부담없이 인프라를 효율적으로 관리할 수 있습니다. 여기서는 서버리스인 [Amazon API Gateway를 이용해 Client와 Websocket을 연결](https://docs.aws.amazon.com/ko_kr/apigateway/latest/developerguide/apigateway-websocket-api-overview.html)하고 [AWS Lambda](https://aws.amazon.com/ko/pm/lambda/?nc1=h_ls)를 이용하여 세션을 관리합니다. 본 게시글에서 사용하는 Client는 Web으로 제공되고, 채팅 이력은 로컬 디바이스가 아니라 서버에 저정되게 됩니다. [Amazon DynamoDB](https://aws.amazon.com/ko/dynamodb/)는 Json형태로 채팅이력을 저장하는데 유용합니다. 이와같이 Client에서는 로그인시에 DynamoDB에 저장된 채팅이력을 로드하여 보여줍니다. 또한 채팅이력은 LLM의 질의시에도 유용하게 사용되므로, Lambda는 채팅시작시에 사용자 아이디를 이용하여 DynamoDB에서 채팅이력을 로드하여 로컬 메모리에 저장하여 활용합니다. 
 
-전체적인 Architecture는 아래와 같습니다.
 
-유연한 대화를 위해서는 채팅이력을 포함하여 데이터 처리하는것이 필요하므로, 채팅이력은 Amazon DynamoDB에 저장되어 LLM이 좀더 적절한 답변을 할 수 있도록 합니다. 
+## Architecture 개요
 
+전체적인 Architecture는 아래와 같습니다. 유연한 대화를 위해서는 채팅이력을 포함하여 데이터 처리하는것이 필요하므로, 채팅이력은 Amazon DynamoDB에 저장되어 LLM이 좀더 적절한 답변을 할 수 있도록 합니다. 
 
 1) CloudFront 주소로 사용자가 접속하면 Amazon S3에서 관련된 리소르를 읽어와서 브라우저 화면에 보여줍니다. 이때 로그인을 수행하고 채팅 화면으로 진입합니다.
 
@@ -24,13 +24,29 @@ Stream 방식은 하나의 요청에 여러번의 응답을 얻게 되므로, HT
 ![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/6e0e5f54-f455-4d65-95ed-438c89baafed)
 
 
-## 서버리스 기반의 Websocket 사용하기
+## 주요 시스템 구성
 
-API Gateway V2에서 Websocket을 지원하고 있으므로, Lambda와 함께 Stream을 지원하는 Chatbot을 만듧니다.
+### 서버리스 기반으로 Websocket 연결하기
 
-Langchain을 사용하도록 Bedrock 설정시 아래와 같이 streaming을 enable 시키고 StreamingStdOutCallbackHandler을 등록합니다.
+서버리스인 API Gateway를 이용하여 [Websocket과 연결](https://docs.aws.amazon.com/ko_kr/apigateway/latest/developerguide/apigateway-websocket-api-overview.html)합니다. 
+
+### Stream 사용하기
+
+먼저 Bedrock을 사용하기 위하여 Bedrock client를 정의합니다. 여기서는 Chatbot은 서울리전을 사용하고, Bedrock은 N.Virginia (us-east-1)을 사용합니다.
 
 ```python
+import boto3
+
+boto3_bedrock = boto3.client(
+    service_name='bedrock-runtime',
+    region_name=bedrock_region,
+)
+```
+
+아래와 같이 LLM에서 어플리케이션을 편리하게 만드는 프레임워크인 [LangChain](https://docs.langchain.com/docs/)을 사용하여 [Bedrock](https://python.langchain.com/docs/integrations/llms/bedrock)을 정의합니다. 이때 stream으로 출력을 보여줄 수 있도록 streaming을 True로 설정합니다. 또한 StreamingStdOutCallbackHandler을 callback으로 등록합니다.
+
+```python
+from langchain.llms.bedrock import Bedrock
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 
 llm = Bedrock(
@@ -41,7 +57,7 @@ llm = Bedrock(
     model_kwargs=parameters)
 ```
 
-본 게시글에서는 LLM에서 어플리케이션을 편리하게 만드는 프레임워크인 [LangChain](https://docs.langchain.com/docs/)을 사용하여 streaming을 처리합니다. 이때 채팅이려까지 고려하기 위하여, ConversationChain을 이용하여 사용자의 질문에 대한 답변을 stream으로 얻습니다. 채팅이력은 ConversationBufferMemory을 이용하여 chat_memory로 설정한 후에 ConversationChain을 정의하여 사용합니다.
+채팅이력까지 고려한 응답을 구하기 위하여, [ConversationChain](https://js.langchain.com/docs/api/chains/classes/ConversationChain)을 이용하여 사용자의 질문에 대한 답변을 stream으로 얻습니다. 이때, 채팅이력은 [ConversationBufferMemory](https://api.python.langchain.com/en/latest/memory/langchain.memory.buffer.ConversationBufferMemory.html)을 이용하여 chat_memory로 설정한 후에 ConversationChain을 정의하여 사용합니다.
 
 ```python
 from langchain.memory import ConversationBufferMemory
@@ -50,15 +66,14 @@ from langchain.chains import ConversationChain
 chat_memory = ConversationBufferMemory(human_prefix='Human', ai_prefix='Assistant')
 conversation = ConversationChain(llm=llm, verbose=False, memory=chat_memory)
 ```
-사용자가 보낸 메시지가 Websocket을 이용하여 API Gateway를 거쳐서 Lambda (chat)에 전달되면, Lambda에서는 아래와 같이 event에서 connectionId와 routeKey를 추출할 수 있습니다. routeKey가 "default"일때 사용자게 보낸 메시지가 들어오는데 여기서 'body"를 추출하여, json포맷의 데이터에서 사용자의 입력인 'text'를 추출합니다. 이후 conversation을 이용하여 LLM으로 부터 응답을 구합니다. 
+
+사용자가 보낸 메시지가 Websocket을 이용하여 API Gateway를 거쳐서 Lambda-chat에 전달되면, Lambda에서는 아래와 같이 event에서 connectionId와 routeKey를 추출할 수 있습니다. routeKey가 "default"일때 사용자게 보낸 메시지가 들어오는데 여기서 'body"를 추출하여, json포맷의 데이터에서 사용자의 입력인 'text'를 추출합니다. 이후 conversation을 이용하여 LLM으로 부터 응답을 구합니다. 
 
 ```python
 def lambda_handler(event, context):
     if event['requestContext']: 
         connectionId = event['requestContext']['connectionId']
-        print('connectionId: ', connectionId)
         routeKey = event['requestContext']['routeKey']
-        print('routeKey: ', routeKey)
 
         if routeKey == '$connect':
             print('connected!')
@@ -85,9 +100,17 @@ def readStreamMsg(connectionId, requestId, stream):
                 'request_id': requestId,
                 'msg': msg
             }
-            #print('result: ', json.dumps(result))
             sendMessage(connectionId, result)
     return msg
+
+def sendMessage(id, body):
+    try:
+        client.post_to_connection(
+            ConnectionId=id, 
+            Data=json.dumps(body)
+        )
+    except: 
+        raise Exception ("Not able to send a message")
 ```
 
 client에 메시지를 보내기 위해 post_to_connection을 이용하여 websocket을 이용합니다.AWS CDK로 인프라설치시 얻은 connection url로 연결을 시도합니다.
