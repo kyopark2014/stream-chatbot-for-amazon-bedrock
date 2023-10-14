@@ -111,7 +111,7 @@ from langchain.memory import ConversationBufferMemory
 chat_memory = ConversationBufferMemory(human_prefix='Human', ai_prefix='Assistant')
 ```
 
-채팅이력까지 고려한 응답을 구하기 위하여, [ConversationChain](https://js.langchain.com/docs/api/chains/classes/ConversationChain)을 이용합니다. 사용자가 Websocket을 이용하여 API Gateway로 보낸 메시지가 [lambda-chat-ws](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/blob/main/lambda-chat-ws/lambda_function.py)에 전달되면, Lambda에서는 아래와 같이 event에서 connectionId와 routeKey를 추출할 수 있습니다. routeKey가 "default"일때 사용자게 보낸 메시지가 들어오는데 여기서 'body"를 추출하여, json포맷의 데이터에서 사용자의 입력인 'text'를 추출합니다. 이후 conversation을 이용하여 LLM으로 부터 응답을 구합니다. 
+채팅이력까지 고려한 응답을 구하기 위하여, [ConversationChain](https://js.langchain.com/docs/api/chains/classes/ConversationChain)을 이용합니다. 사용자가 Websocket을 이용하여 API Gateway로 보낸 메시지가 [lambda-chat-ws](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/blob/main/lambda-chat-ws/lambda_function.py)에 전달되면, Lambda에서는 아래와 같이 event에서 connectionId와 routeKey를 추출할 수 있습니다. routeKey가 "default"일때 사용자게 보낸 메시지가 들어오는데 여기서 'body"를 추출하여, json포맷의 데이터에서 사용자의 입력인 'text'를 추출합니다. 이후 아래와 같이 conversation.predict()을 이용하여 LLM에 응답을 요청합니다. 
 
 ```python
 from langchain.chains import ConversationChain
@@ -134,7 +134,7 @@ def lambda_handler(event, context):
         msg = readStreamMsg(connectionId, requestId, msg)
 ```
 
-이때 stream은 아래와 같이 event를 추출한 후에 Websocket을 이용하여 client로 전달합니다. 
+LLM의 응답은 stream으로 들어오는데, 아래와 같이 stream에서 event를 추출한 후에 sendMessage() 이용하여 client로 전달합니다. 
 
 ```python
 def readStreamMsg(connectionId, requestId, stream):
@@ -149,19 +149,9 @@ def readStreamMsg(connectionId, requestId, stream):
             }
             sendMessage(connectionId, result)
     return msg
-
-def sendMessage(id, body):
-    try:
-        client.post_to_connection(
-            ConnectionId=id, 
-            Data=json.dumps(body)
-        )
-    except: 
-        raise Exception ("Not able to send a message")
 ```
 
-client에 메시지를 보내기 위해 [Boto3의 post_to_connection](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/apigatewaymanagementapi/client/post_to_connection.html)을 이용하여 websocket을 이용합니다. 이때 접속하는 Endpoint는 Websocket을 지원하는 API Gateway입니다.
-
+아래와 같이 sendMessage()은 [Boto3의 post_to_connection](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/apigatewaymanagementapi/client/post_to_connection.html)을 이용하여 client로 응답을 전송 합니다. 이때 lambda-chat-ws가 전달하는 Endpoint는 Websocket을 지원하는 API Gateway입니다.
 
 ```python
 import boto3
@@ -175,6 +165,94 @@ def sendMessage(id, body):
         )
     except: 
         raise Exception ("Not able to send a message")
+```
+
+### 대화 이력의 관리
+
+[client](./html/chat.js)는 이전 채팅이력을 가져오기 위하여 '/history' API와 연결된 [lambda-gethistory](./lambda-gethistory/index.js)로 아래와 같이 요청을 보냅니다. [lambda-gethistory](./lambda-gethistory/index.js)
+
+```java
+getHistory(userId, allowTime);
+
+function getHistory(userId, allowTime) {
+    const uri = "history";
+    const xhr = new XMLHttpRequest();
+
+    xhr.open("POST", uri, true);
+    xhr.onreadystatechange = () => {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            let response = JSON.parse(xhr.responseText);
+            let history = JSON.parse(response['msg']);
+                        
+            for(let i=0; i<history.length; i++) {
+                if(history[i].type=='text') {                
+                    let requestId = history[i].request_id;
+                    console.log("requestId: ", requestId);
+                    let timestr = history[i].request_time;
+                    console.log("timestr: ", timestr);
+                    let body = history[i].body;
+                    console.log("question: ", body);
+                    let msg = history[i].msg;
+                    console.log("answer: ", msg);
+                    addSentMessage(requestId, timestr, body)
+                    addReceivedMessage(requestId, msg);                            
+                }                 
+            }         
+        }
+    };
+    
+    var requestObj = {
+        "userId": userId,
+        "allowTime": allowTime
+    }
+    var blob = new Blob([JSON.stringify(requestObj)], {type: 'application/json'});
+
+    xhr.send(blob);            
+}
+```
+
+[lambda-gethistory](./lambda-gethistory/index.js)은 아래와 같이 userId와 allowTime(최근 2일)으로 DynamoDB를 query하여 결과를 client로 전달합니다.
+
+```java
+const aws = require('aws-sdk');
+var dynamo = new aws.DynamoDB();
+
+let queryParams = {
+    TableName: tableName,
+    KeyConditionExpression: "user_id = :userId and request_time > :allowTime",
+    ExpressionAttributeValues: {
+        ":userId": {'S': userId},
+        ":allowTime": {'S': allowTime}
+    }
+};
+
+try {
+    let result = await dynamo.query(queryParams).promise();
+
+    let history = [];
+    for(let item of result['Items']) {
+        console.log('item: ', item);
+        let request_time = item['request_time']['S'];
+        let request_id = item['request_id']['S'];
+        let body = item['body']['S'];
+        let msg = item['msg']['S'];
+        let type = item['type']['S'];
+
+        history.push({
+            'request_time': request_time,
+            'request_id': request_id,
+            'type': type,
+            'body': body,
+            'msg': msg,
+        });
+    }
+
+    const response = {
+        statusCode: 200,
+        msg: JSON.stringify(history)
+    };
+    return response;        
+}
 ```
 
 ## 직접 실습 해보기
