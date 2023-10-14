@@ -296,6 +296,21 @@ def load_chatHistory(userId, allowTime, chat_memory):
             chat_memory.save_context({"input": text}, {"output": msg})    
 ```            
 
+### WebSocket을 지원하는 API Gateway를 구현하기
+
+[cdk-stream-chatbot-stack.ts](./cdk-stream-chatbot/lib/cdk-stream-chatbot-stack.ts)에서는 아래와 같이 Websocket을 지원하는 API Gateway를 정의합니다. 여기서 [client](./html/chat.js)가 접속하는 API Gateway의 Endpoint는 wss_url이고, [lambda-chat-ws](./lambda-chat-ws/lambda_function.py)가 접속하는 API Gateway의 endpoint는 connection_url입니다.
+
+```typescript
+const websocketapi = new apigatewayv2.CfnApi(this, `ws-api-for-${projectName}`, {
+    description: 'API Gateway for chatbot using websocket',
+    apiKeySelectionExpression: "$request.header.x-api-key",
+    name: 'ws-api-for-' + projectName,
+    protocolType: "WEBSOCKET", // WEBSOCKET or HTTP
+    routeSelectionExpression: "$request.body.action",
+});
+const wss_url = `wss://${websocketapi.attrApiId}.execute-api.${region}.amazonaws.com/${stage}`;
+const connection_url = `https://${websocketapi.attrApiId}.execute-api.${region}.amazonaws.com/${stage}`;
+```
 
 
 ## 직접 실습 해보기
