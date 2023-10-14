@@ -14,17 +14,17 @@ Stream 방식은 하나의 요청에 여러번의 응답을 얻게 되므로, HT
 
 상세하게 단계별로 설명하면 아래와 같습니다. 
 
-- 단계1: CloudFront 주소로 사용자가 접속하면 Amazon S3에서 관련된 리소르를 읽어와서 브라우저 화면에 보여줍니다. 이때 로그인을 수행하고 채팅 화면으로 진입합니다.
+- 단계1: CloudFront 주소로 사용자가 브라우저를 이용하여 접속하면, Amazon S3에서 HTML, CSS, JS등의 파일을 전달합니다. 이때 로그인을 수행하고 채팅 화면으로 진입합니다.
 
-- 단계2: 사용자 아이디를 이용하여 DynamoDB에 저장된 채팅 이력을 API Gateway와 Lambda-history를 통해 읽어옵니다.
+- 단계2: 사용자 아이디를 이용하여 '/history' API로 채팅이력을 요청합니다. 이 요청은 API Gateway를 [lambda-history](./lambda-gethistory/index.js)에 전달됩니다. 이후 DynamoDB에서 채팅 이력을 조회한후에 다시 API Gateway와 Lambda-history를 통해 사용자에게 전달합니다.
 
-- 단계3: 사용자가 채팅에서 메시지를 입력하면 API Gateway와 Websocket으로 세션을 연결하고 메시지를 전송합니다. Lambda-chat-ws은 Websocket connection event를 받으면 API Gateway와 연결하여 메시지를 수신합니다.
+- 단계3: Client가 API Gateway로 WebSocket 연결을 시도하면, API Gateway를 거쳐서 [lambda-chat-ws](./lambda-chat-ws/lambda_function.py)로 Websocket connection event가 전달됩니다. 이후 사용자가 메시지를 입력하면, API Gateway를 거쳐서 [lambda-chat-ws](./lambda-chat-ws/lambda_function.py)에 메시지가 전달됩니다.
   
-- 단계4: Lambda-chat은 DynamoDB의 기존 채팅이력을 읽어와서, 채팅 메모리에 저장합니다.
+- 단계4: [lambda-chat-ws](./lambda-chat-ws/lambda_function.py)은 사용자 아이디를 이용하여 DynamoDB의 기존 채팅이력을 읽어와서, 채팅 메모리에 저장합니다.
 
-- 단계5: Lambda-chat은 사용자의 질문(question)과 채팅이력(chat history)을 LLM에 전달합니다. 
+- 단계5: [lambda-chat-ws](./lambda-chat-ws/lambda_function.py)은 사용자의 질문(question)과 채팅이력(chat history)을 Amazon Bedrock의 Enpoint로 전달합니다. 
 
-- 단계6: Amazon Bedrock의 Anthropic LLM은 사용자의 질문과 채팅이력을 이용하여 적절한 답변(answer)를 생선한 후에 사용자에게 전달합니다. 여기에서는 한글 성능이 우수한 Anthropic의 Claude 모델을 사용하였습니다. 
+- 단계6: Amazon Bedrock의 사용자의 질문과 채팅이력이 전달되면, Anthropic LLM을 이용하여 적절한 답변(answer)을 사용자에게 전달합니다. 이때, stream을 사용하여 답변이 완성되기 전에 답변(answer)를 사용자에게 전달할 수 있습니다.
 
 이때의 Sequence diagram은 아래와 같습니다.
 
