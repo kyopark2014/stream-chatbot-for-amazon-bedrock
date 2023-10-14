@@ -79,7 +79,7 @@ function sendMessage(message) {
 
 ### Stream 사용하기
 
-먼저 Bedrock을 사용하기 위하여 [Boto3로 Bedrock client](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock.html)를 정의합니다. 여기서는 Chatbot은 서울리전을 사용하고, Bedrock은 N.Virginia (us-east-1)을 사용합니다.
+[lambda-chat-ws](./lambda-chat-ws/lambda_function.py)에서는 Bedrock을 사용하기 위하여 [Boto3로 Bedrock client](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock.html)를 정의합니다. 여기서는 Chatbot은 서울리전을 사용하고, Bedrock은 N.Virginia (us-east-1)을 사용합니다.
 
 ```python
 import boto3
