@@ -121,7 +121,7 @@ from langchain.memory import ConversationBufferMemory
 chat_memory = ConversationBufferMemory(human_prefix='Human', ai_prefix='Assistant')
 ```
 
-채팅 이력까지 고려한 답변을 구하기 위하여, [ConversationChain](https://js.langchain.com/docs/api/chains/classes/ConversationChain)을 이용합니다. 사용자가 WebSocket을 이용하여 API Gateway로 보낸 메시지가 [lambda-chat-ws](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/blob/main/lambda-chat-ws/lambda_function.py)에 전달되면, 아래와 같이 event에서 connectionId와 routeKey를 추출할 수 있습니다. routeKey가 "default"일때 사용자게 보낸 메시지가 들어오는데 여기서 'body"를 추출하여, json포맷의 데이터에서 사용자의 입력인 'text'를 추출합니다. 이후 아래와 같이 conversation.predict()을 이용하여 LLM에 응답을 요청합니다. 
+채팅 이력까지 고려한 답변을 구하기 위하여, [ConversationChain](https://js.langchain.com/docs/api/chains/classes/ConversationChain)을 이용합니다. 사용자가 WebSocket을 이용하여 API Gateway로 보낸 메시지가 [lambda-chat-ws](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/blob/main/lambda-chat-ws/lambda_function.py)에 전달되면, 아래와 같이 event에서 connectionId와 routeKey를 추출할 수 있습니다. routeKey가 "default"일때 사용자게 보낸 메시지가 들어오는데 여기서 'body"를 추출하여, json포맷의 데이터에서 사용자의 입력인 'text'를 추출합니다. 이후 아래와 같이 conversation.predict()을 이용하여 LLM에 답변을 요청합니다. 
 
 ```python
 from langchain.chains import ConversationChain
@@ -144,7 +144,7 @@ def lambda_handler(event, context):
         msg = readStreamMsg(connectionId, requestId, msg)
 ```
 
-LLM의 응답은 stream으로 들어오는데, 아래와 같이 stream에서 event를 추출한 후에 sendMessage() 이용하여 client로 답변을 전달합니다. Client에서 답변 메시지를 구분하기 위해, "request_id"를 함께 전달합니다.  
+LLM의 답변은 stream으로 들어오는데, 아래와 같이 stream에서 event를 추출한 후에 sendMessage() 이용하여 client로 답변을 전달합니다. Client에서 답변 메시지를 구분하여 표시하기 위해서, "request_id"를 함께 전달합니다.  
 
 ```python
 def readStreamMsg(connectionId, requestId, stream):
@@ -161,7 +161,7 @@ def readStreamMsg(connectionId, requestId, stream):
     return msg
 ```
 
-아래와 같이 sendMessage()은 [Boto3의 post_to_connection](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/apigatewaymanagementapi/client/post_to_connection.html)을 이용하여 client로 응답을 전송 합니다. 이때 lambda-chat-ws가 메시지를 전달하는 Endpoint는 WebSocket을 지원하는 API Gateway입니다.
+아래와 같이 sendMessage()는 [Boto3의 post_to_connection](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/apigatewaymanagementapi/client/post_to_connection.html)을 이용하여 client로 응답을 전송 합니다. 이때 lambda-chat-ws가 메시지를 전달하는 Endpoint는 WebSocket을 지원하는 API Gateway 주소입니다.
 
 ```python
 import boto3
@@ -357,7 +357,7 @@ cdk destroy --all
 
 ## 결론
 
-Amazon Bedrock이 정식으로 GA가 되면서 한국어 챗봇을 Anthropic Claude를 이용하여 쉽게 사용할 수 있게 되었습니다. 본 게시글에서는 Antrhohic의 Claude LLM용을 이용하여, 대표적인 LLM 어플리케이션 개발 프레임워크인 LangChain로 한국어 Chatbot을 만들었습니다. 이때 WebSocket을 이용하여 Client와 서버를 연결하여, Stream 형태로 답변을 표시할 수 있었습니다. Amazon Bedrock은 다양한 Foundation Model로 쉽게 생성형 AI로 어플리케이션을 개발할 수 있도록 해줍니다. 전체적인 인프라의 배포 및 관리를 위하여 AWS CDK를 사용하였고, 서버리스로 인프라 관리에 대한 부담없이 편리하게 한국어 Chatbot을 만들 수 있습니다. 대용량 언어 모델을 이용한 한국어 Chatbot은 기존 Role 방식의 Chatbot 대비 훨씬 개선된 대화능력을 보여줍니다. 향후 AWS Bedrock을 이용하여 다양한 어플리케이션을 쉽고 효과적으로 개발할 수 있을것으로 기대됩니다. 
+Amazon Bedrock이 상용이 되면서 AWS 환경에서 한국어 챗봇을 Anthropic Claude를 이용하여 쉽게 구현할 수 있게 되었습니다. 본 게시글에서는 Anthropic의 Claude LLM을 이용하여, 대표적인 LLM 어플리케이션 개발 프레임워크인 LangChain로 한국어 Chatbot을 만들었습니다. 이때 WebSocket을 이용하여 Client와 서버를 연결하여, Stream 형태로 답변을 표시할 수 있었습니다. Amazon Bedrock은 다양한 Foundation Model로 쉽게 생성형 AI 어플리케이션을 개발할 수 있도록 도와줍니다. 또한 한국어 chatbot을 위한 인프라는 서버리스로 구성해서 인프라 관리에 대한 부담을 줄였고, AWS CDK를 이용하여 인프라의 배포 및 관리를 쉽게할 수 있도록 하였습니다. 대용량 언어 모델을 이용한 한국어 Chatbot은 기존 Role 방식의 Chatbot 대비 훨씬 개선된 대화능력을 보여줍니다. 향후 AWS Bedrock을 이용하여 다양한 어플리케이션을 쉽고 효과적으로 개발할 수 있을것으로 기대됩니다. 
 
 ## 실습 코드 및 도움이 되는 참조 블로그
 
