@@ -523,7 +523,7 @@ export class CdkStreamChatbotStack extends cdk.Stack {
     } 
 
     // deploy components
-    new componentDeployment(scope, "deployment-stream-chatbot-simple", websocketapi.attrApiId)         
+    new componentDeployment(scope, `component-deployment-of-${projectName}`, websocketapi.attrApiId)         
   }
 }
 
@@ -531,7 +531,7 @@ export class componentDeployment extends cdk.Stack {
   constructor(scope: Construct, id: string, appId: string, props?: cdk.StackProps) {    
     super(scope, id, props);
 
-    new apigatewayv2.CfnDeployment(this, `api-deployment-for-${projectName}`, {
+    new apigatewayv2.CfnDeployment(this, `api-deployment-of-${projectName}`, {
       apiId: appId,
       description: "deploy api gateway using websocker",  // $default
       stageName: stage
