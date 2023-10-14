@@ -1,30 +1,35 @@
 # Amazon Bedrock을 이용하여 Stream 방식의 한국어 Chatbot 구현하기 
 
-[2023년 9월 Amazon Bedrock의 상용](https://aws.amazon.com/ko/about-aws/whats-new/2023/09/amazon-bedrock-generally-available/)으로 [Amazon Titan](https://aws.amazon.com/ko/bedrock/titan/), [Anthropic Claude](https://aws.amazon.com/ko/bedrock/claude/)등의 다양한 LLM (Large Language Model)을 AWS 환경에서 편리하게 사용할 수 있습니다. 특히 Anthropic의 Claude 모델은 한국어를 비교적 잘 지원하고 있습니다. Chatbot과 원활한 대화를 위해서는 사용자의 질문(Question)에 대한 전체 답변(Answer)을 얻을 때까지 기다리기 보다는 [Stream 형태](https://blog.langchain.dev/streaming-support-in-langchain/)로 대화하듯이 보여주는것이 사용성에서 좋습니다. 본 게시글에서는 [Amazon Bedrock](https://aws.amazon.com/ko/bedrock/)을 사용하여 Stream을 지원하는 한국어 Chatbot을 만드는 방법을 설명합니다. 
+[2023년 9월 Amazon Bedrock의 상용](https://aws.amazon.com/ko/about-aws/whats-new/2023/09/amazon-bedrock-generally-available/)으로 [Amazon Titan](https://aws.amazon.com/ko/bedrock/titan/), [Anthropic Claude](https://aws.amazon.com/ko/bedrock/claude/)등의 다양한 LLM (Large Language Model)을 AWS 환경에서 편리하게 사용할 수 있게 되었습니다. 특히 Anthropic의 Claude 모델은 한국어를 비교적 잘 지원하고 있습니다. Chatbot과 원활한 대화를 위해서는 사용자의 질문(Question)에 대한 전체 답변(Answer)을 얻을 때까지 기다리기 보다는 [Stream 형태](https://blog.langchain.dev/streaming-support-in-langchain/)로 대화하듯이 보여주는것이 사용성에서 좋습니다. 본 게시글에서는 [Amazon Bedrock](https://aws.amazon.com/ko/bedrock/)을 사용하여 Stream을 지원하는 한국어 Chatbot을 만드는 방법을 설명합니다. 
 
 Stream 방식은 하나의 요청에 여러번의 응답을 얻게 되므로, HTTP 방식보다는 세션을 통해 메시지를 교환하는 Websocket 방식이 유용합니다. 또한 서버리스(serverless) 아키텍처를 사용하면 인프라의 유지보수에 대한 부담없이 인프라를 효율적으로 관리할 수 있습니다. 여기서는 서버리스인 [Amazon API Gateway를 이용해 Client와 Websocket을 연결](https://docs.aws.amazon.com/ko_kr/apigateway/latest/developerguide/apigateway-websocket-api-overview.html)하고 [AWS Lambda](https://aws.amazon.com/ko/pm/lambda/?nc1=h_ls)를 이용하여 세션을 관리합니다. 본 게시글에서 사용하는 Client는 Web으로 제공되고, 채팅 이력은 로컬 디바이스가 아니라 서버에 저정되게 됩니다. [Amazon DynamoDB](https://aws.amazon.com/ko/dynamodb/)는 Json형태로 채팅이력을 저장하는데 유용합니다. 이와같이 Client에서는 로그인시에 DynamoDB에 저장된 채팅이력을 로드하여 보여줍니다. 또한 채팅이력은 LLM의 질의시에도 유용하게 사용되므로, Lambda는 채팅시작시에 사용자 아이디를 이용하여 DynamoDB에서 채팅이력을 로드하여 로컬 메모리에 저장하여 활용합니다. 
 
 
 ## Architecture 개요
 
-전체적인 Architecture는 아래와 같습니다. 유연한 대화를 위해서는 채팅이력을 포함하여 데이터 처리하는것이 필요하므로, 채팅이력은 Amazon DynamoDB에 저장되어 LLM이 좀더 적절한 답변을 할 수 있도록 합니다. 
-
-1) CloudFront 주소로 사용자가 접속하면 Amazon S3에서 관련된 리소르를 읽어와서 브라우저 화면에 보여줍니다. 이때 로그인을 수행하고 채팅 화면으로 진입합니다.
-
-2) 사용자 아이디를 이용하여 DynamoDB에 저장된 채팅 이력을 API Gateway와 Lambda-history를 통해 읽어옵니다.
-
-3) 사용자가 채팅에서 메시지를 입력하면 API Gateway와 Websocket으로 세션을 연결하고 메시지를 전송합니다. Lambda-chat-ws은 Websocket connection event를 받으면 API Gateway와 연결하여 메시지를 수신합니다.
-  
-4) Lambda-chat은 DynamoDB의 기존 채팅이력을 읽어와서, 채팅 메모리에 저장합니다.
-
-5) Lambda-chat은 사용자의 질문(question)과 채팅이력(chat history)을 LLM에 전달합니다. 
-
-7) Amazon Bedrock의 Anthropic LLM은 사용자의 질문과 채팅이력을 이용하여 적절한 답변(answer)를 생선한 후에 사용자에게 전달합니다. 여기에서는 한글 성능이 우수한 Anthropic의 Claude 모델을 사용하였습니다. 
+전체적인 Architecture는 아래와 같습니다. 사용자는 Web Client를 이용하여 로그인하면, 이전 대화이력을 확인할 수 있습니다. 이후 질문을 입력하면 Websocket을 이용하여 API Gateway를 거쳐 Lambda로 질문이 전달됩니다. Lambda는 DynamoDB에서 채팅이력을 확인하여 채팅을 위한 메모리를 할당합니다. 이후 질문과 채팅이력을 포함한 메시지를 Amazon Bedrock에 전달하여 질문에 대한 답변을 요청합니다. Bedrock의 Anthropic Claude 모델을 활용하여 응답을 얻은후 답변을 전달하면 Lambda와 API Gateway를 거쳐사 사용자에게 전달되게 됩니다.
 
 ![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/6e0e5f54-f455-4d65-95ed-438c89baafed)
 
+상세하게 단계별로 설명하면 아래와 같습니다. 
+
+- 단계1: CloudFront 주소로 사용자가 접속하면 Amazon S3에서 관련된 리소르를 읽어와서 브라우저 화면에 보여줍니다. 이때 로그인을 수행하고 채팅 화면으로 진입합니다.
+
+- 단계2: 사용자 아이디를 이용하여 DynamoDB에 저장된 채팅 이력을 API Gateway와 Lambda-history를 통해 읽어옵니다.
+
+- 단계3: 사용자가 채팅에서 메시지를 입력하면 API Gateway와 Websocket으로 세션을 연결하고 메시지를 전송합니다. Lambda-chat-ws은 Websocket connection event를 받으면 API Gateway와 연결하여 메시지를 수신합니다.
+  
+- 단계4: Lambda-chat은 DynamoDB의 기존 채팅이력을 읽어와서, 채팅 메모리에 저장합니다.
+
+- 단계5: Lambda-chat은 사용자의 질문(question)과 채팅이력(chat history)을 LLM에 전달합니다. 
+
+- 단계6: Amazon Bedrock의 Anthropic LLM은 사용자의 질문과 채팅이력을 이용하여 적절한 답변(answer)를 생선한 후에 사용자에게 전달합니다. 여기에서는 한글 성능이 우수한 Anthropic의 Claude 모델을 사용하였습니다. 
+
+
 
 ## 주요 시스템 구성
+
+전체 시스템의 상세 구현에 대하여 아래와 같이 설명합니다.
 
 ### 서버리스 기반으로 Websocket 연결하기
 
