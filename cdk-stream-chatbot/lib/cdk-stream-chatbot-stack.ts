@@ -503,11 +503,11 @@ export class CdkStreamChatbotStack extends cdk.Stack {
     });
 
     // deployment of apl gateway2 (websocket)
-    new apigatewayv2.CfnDeployment(this, `api-deployment-for-${projectName}`, {
+   /* new apigatewayv2.CfnDeployment(this, `api-deployment-for-${projectName}`, {
       apiId: websocketapi.attrApiId,
       description: "deploy api gateway using websocker",  // $default
       stageName: stage
-    });   
+    });   */
 
     // deploy components
     // new componentDeployment(scope, "deployment-stream-chatbot-simple", websocketapi.attrApiId)  
