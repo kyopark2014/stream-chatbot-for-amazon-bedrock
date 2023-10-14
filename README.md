@@ -64,7 +64,7 @@ from langchain.memory import ConversationBufferMemory
 chat_memory = ConversationBufferMemory(human_prefix='Human', ai_prefix='Assistant')
 ```
 
-채팅이력까지 고려한 응답을 구하기 위하여, [ConversationChain](https://js.langchain.com/docs/api/chains/classes/ConversationChain)을 이용하여 사용자의 질문에 대한 답변을 stream으로 얻습니다. 사용자가 보낸 메시지가 Websocket을 이용하여 API Gateway를 거쳐서 Lambda-chat에 전달되면, Lambda에서는 아래와 같이 event에서 connectionId와 routeKey를 추출할 수 있습니다. routeKey가 "default"일때 사용자게 보낸 메시지가 들어오는데 여기서 'body"를 추출하여, json포맷의 데이터에서 사용자의 입력인 'text'를 추출합니다. 이후 conversation을 이용하여 LLM으로 부터 응답을 구합니다. 
+채팅이력까지 고려한 응답을 구하기 위하여, [ConversationChain](https://js.langchain.com/docs/api/chains/classes/ConversationChain)을 이용합니다. 사용자가 보낸 메시지가 Websocket을 이용하여 API Gateway를 거쳐서 Lambda-chat에 전달되면, Lambda에서는 아래와 같이 event에서 connectionId와 routeKey를 추출할 수 있습니다. routeKey가 "default"일때 사용자게 보낸 메시지가 들어오는데 여기서 'body"를 추출하여, json포맷의 데이터에서 사용자의 입력인 'text'를 추출합니다. 이후 conversation을 이용하여 LLM으로 부터 응답을 구합니다. 
 
 ```python
 from langchain.chains import ConversationChain
