@@ -171,7 +171,7 @@ def sendMessage(id, body):
 
 [client](./html/chat.js)는 이전 채팅이력을 가져오기 위하여 '/history' API와 연결된 [lambda-gethistory](./lambda-gethistory/index.js)로 아래와 같이 요청을 보냅니다.
 
-```java
+```javascript
 getHistory(userId, allowTime);
 
 function getHistory(userId, allowTime) {
@@ -254,6 +254,49 @@ try {
     return response;        
 }
 ```
+
+[lambda-chat-ws](./lambda-chat-ws/lambda_function.py)는 아래와 같이 채팅 이력을 저장하는 map을 관리합니다. 사용자의 요청에서 userId를 추출하여 lambda-chat-ws가 채팅이력을 가지고 있지 않은 경우에 chat_memory를 생성하여, 기존 이력을 load_chatHistory()로 읽어서 ConversationChain으로 관리합니다.
+
+```python
+map = dict() # Conversation
+
+if userId in map:  
+    chat_memory = map[userId]
+else: 
+    chat_memory = ConversationBufferMemory(human_prefix='Human', ai_prefix='Assistant')
+    map[userId] = chat_memory
+
+    allowTime = getAllowTime()
+    load_chatHistory(userId, allowTime, chat_memory)
+
+    conversation = ConversationChain(llm=llm, verbose=False, memory=chat_memory)
+```
+
+load_chatHistory()은 아래와 같이 userId와 allowTime로 채팅 이력을 조회하여 chat_memory에 저장합니다.
+
+```python
+def load_chatHistory(userId, allowTime, chat_memory):
+    dynamodb_client = boto3.client('dynamodb')
+
+    response = dynamodb_client.query(
+        TableName=callLogTableName,
+        KeyConditionExpression='user_id = :userId AND request_time > :allowTime',
+        ExpressionAttributeValues={
+            ':userId': {'S': userId},
+            ':allowTime': {'S': allowTime}
+        }
+    )
+
+    for item in response['Items']:
+        text = item['body']['S']
+        msg = item['msg']['S']
+        type = item['type']['S']
+
+        if type == 'text':
+            chat_memory.save_context({"input": text}, {"output": msg})    
+```            
+
+
 
 ## 직접 실습 해보기
 
