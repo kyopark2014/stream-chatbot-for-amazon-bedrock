@@ -169,7 +169,7 @@ def sendMessage(id, body):
 
 ### 대화 이력의 관리
 
-[client](./html/chat.js)는 이전 채팅이력을 가져오기 위하여 '/history' API와 연결된 [lambda-gethistory](./lambda-gethistory/index.js)로 아래와 같이 요청을 보냅니다. [lambda-gethistory](./lambda-gethistory/index.js)
+[client](./html/chat.js)는 이전 채팅이력을 가져오기 위하여 '/history' API와 연결된 [lambda-gethistory](./lambda-gethistory/index.js)로 아래와 같이 요청을 보냅니다.
 
 ```java
 getHistory(userId, allowTime);
