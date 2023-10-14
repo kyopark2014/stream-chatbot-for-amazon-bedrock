@@ -28,7 +28,7 @@ Stream 방식은 하나의 요청에 여러번의 응답을 얻게 되므로, HT
 
 이때의 Sequence diagram은 아래와 같습니다.
 
-<img src="./sequence/seq-chat.png" width="800">
+<img src="./sequence/seq-chat.png" width="900">
 
 
 
