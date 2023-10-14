@@ -2,6 +2,8 @@
 
 [2023년 9월 Amazon Bedrock의 상용](https://aws.amazon.com/ko/about-aws/whats-new/2023/09/amazon-bedrock-generally-available/)으로 [Amazon Titan](https://aws.amazon.com/ko/bedrock/titan/), [Anthropic Claude](https://aws.amazon.com/ko/bedrock/claude/)등의 다양한 LLM (Large Language Model)을 편리하게 사용할 수 있습니다. 특히 Anthropic의 Claude 모델은 한국어를 비교적 잘 지원하고 있습니다. Chatbot에서 원활한 대화를 위해서는 사용자의 질문(Question)에 대한 전체 답변을 줄때까지 기다리기 보다는 Stream 형태로 대화하듯이 보여주는것이 사용성이 좋습니다. 이를 위해서 LLM에서 어플리케이션을 편리하게 만드는 [LangChain](https://docs.langchain.com/docs/)에서는 [streaming](https://blog.langchain.dev/streaming-support-in-langchain/)을 제공하고 있습니다. 본 게시글에서는 [Amazon Bedrock](https://aws.amazon.com/ko/bedrock/)을 사용하여 Stream을 지원하는 Chatbot을 만드는 방법을 설명합니다. 
 
+서버리스(serverless) 아키텍처를 사용하면 인프라의 유지보수에 대한 부담없이 인프라를 효율적으로 관리할 수 있습니다. 또한 Stream형식으로 응답을 처리하려면 HTTP 방식보다는 하나의 세션을 통해 메시지를 교환하는 Websocket 방식이 유용합니다. 여기서는 서버리스인 [Amazon API Gateway를 이용해 Client와 Websocket을 연결](https://docs.aws.amazon.com/ko_kr/apigateway/latest/developerguide/apigateway-websocket-api-overview.html)하고 [AWS Lambda](https://aws.amazon.com/ko/pm/lambda/?nc1=h_ls)를 이용하여 세션을 관리합니다. 
+
 전체적인 Architecture는 아래와 같습니다.
 
 유연한 대화를 위해서는 채팅이력을 포함하여 데이터 처리하는것이 필요하므로, 채팅이력은 Amazon DynamoDB에 저장되어 LLM이 좀더 적절한 답변을 할 수 있도록 합니다. 
