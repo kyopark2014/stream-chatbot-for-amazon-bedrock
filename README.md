@@ -28,7 +28,54 @@ Stream 방식은 하나의 요청에 여러번의 응답을 얻게 되므로, HT
 
 ### 서버리스 기반으로 Websocket 연결하기
 
-서버리스인 API Gateway를 이용하여 [Websocket과 연결](https://docs.aws.amazon.com/ko_kr/apigateway/latest/developerguide/apigateway-websocket-api-overview.html)합니다. 
+[Client](./html/chat.js)는 서버리스인 API Gateway를 이용하여 [Websocket과 연결](https://docs.aws.amazon.com/ko_kr/apigateway/latest/developerguide/apigateway-websocket-api-overview.html)합니다. 이때 client가 연결하는 endpoint는 API Gateway 주소입니다. 아래와 같이 WebSocket을 선언한 후에 onmessage로 메시지가 들어오면, event의 'data'에서 메시지를 추출합니다. 세션을 유지하기 위해 일정간격으로 keep alive 동작을 수행합니다. 
+
+```java
+const ws = new WebSocket(endpoint);
+
+ws.onmessage = function (event) {        
+    response = JSON.parse(event.data)
+
+    if(response.request_id) {
+        addReceivedMessage(response.request_id, response.msg);
+    }
+};
+
+ws.onopen = function () {
+    isConnected = true;
+    if(type == 'initial')
+        setInterval(ping, 57000); 
+};
+
+ws.onclose = function () {
+    isConnected = false;
+    ws.close();
+};
+```
+
+발신 메시지는 JSON 포맷으로 아래와 같이 userId, 요청시간, 메시지 타입과 메시지를 포함합니다. 발신시 [websocket의 send()](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/send)을 이용하여 아래와 같이 발신합니다. 만약 발신시점에 세션이 연결되어 있지 않다면 연결하고 재시도 하도록 알림을 표시합니다.
+
+```java
+sendMessage({
+    "user_id": userId,
+    "request_id": requestId,
+    "request_time": requestTime,        
+    "type": "text",
+    "body": message.value
+})
+
+webSocket = connect(endpoint, 'initial');
+function sendMessage(message) {
+    if(!isConnected) {
+        webSocket = connect(endpoint, 'reconnect');
+        
+        addNotifyMessage("재연결중입니다. 잠시후 다시시도하세요.");
+    }
+    else {
+        webSocket.send(JSON.stringify(message));     
+    }     
+}
+```
 
 ### Stream 사용하기
 
