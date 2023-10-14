@@ -1,6 +1,6 @@
 # Amazon Bedrock을 이용하여 Stream 기반의 한국어 Chatbot 구현하기 
 
-2023년 9월 Amazon Bedrock의 상용으로 Amazon Titan, Anthropic의 Claude등의 다양한 LLM 모델을 편리하게 사용할 수 있습니다. 여기에서는 Amazon Bedrock을 사용하여 Stream을 지원하는 Chatbot을 만드는 방법을 설명합니다. 유연한 대화를 위해서는 채팅이력을 포함하여 데이터 처리하는것이 필요하므로, 채팅이력은 Amazon DynamoDB에 저장되어 LLM이 좀더 적절한 답변을 할 수 있도록 합니다. 
+[2023년 9월 Amazon Bedrock의 상용](https://aws.amazon.com/ko/about-aws/whats-new/2023/09/amazon-bedrock-generally-available/)으로 [Amazon Titan](https://aws.amazon.com/ko/bedrock/titan/), [Anthropic Claude](https://aws.amazon.com/ko/bedrock/claude/)등의 다양한 LLM 모델을 편리하게 사용할 수 있습니다. 여기에서는 [Amazon Bedrock](https://aws.amazon.com/ko/bedrock/)을 사용하여 Stream을 지원하는 Chatbot을 만드는 방법을 설명합니다. 유연한 대화를 위해서는 채팅이력을 포함하여 데이터 처리하는것이 필요하므로, 채팅이력은 Amazon DynamoDB에 저장되어 LLM이 좀더 적절한 답변을 할 수 있도록 합니다. 
 
 전체적인 Architecture는 아래와 같습니다.
 
