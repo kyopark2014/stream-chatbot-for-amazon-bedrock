@@ -1,4 +1,4 @@
-const protocol = 'HTTP'; // WEBSOCKET or HTTP
+const protocol = 'WEBSOCKET'; // WEBSOCKET or HTTP
 const endpoint = 'wss://asp2qjhyhl.execute-api.ap-northeast-2.amazonaws.com/dev';
 const langstate = 'korean'; // korean or english
 let webSocket
