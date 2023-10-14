@@ -17,7 +17,7 @@ const debug = false;
 const stage = 'dev';
 const s3_prefix = 'docs';
 const model_id = "anthropic.claude-v2"; // amazon.titan-tg1-large, amazon.titan-tg1-xlarge, anthropic.claude-v1, anthropic.claude-v2
-const projectName = `stream-chatbot-simple`; 
+const projectName = `stream-chatbot`; 
 
 const bucketName = `storage-for-${projectName}-${region}`; 
 const bedrock_region = "us-east-1";  // "us-east-1" "us-west-2" 
@@ -29,7 +29,7 @@ export class CdkStreamChatbotStack extends cdk.Stack {
 
     // s3 
     const s3Bucket = new s3.Bucket(this, `storage-${projectName}`,{
-      bucketName: bucketName,
+      //bucketName: bucketName,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
