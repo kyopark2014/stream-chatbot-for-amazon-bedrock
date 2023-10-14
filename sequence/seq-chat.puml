@@ -26,34 +26,53 @@ hide footbox
 
 actor User as user
 participant "<color:#magenta><$CloudFront></color>\nAmazon CloudFront" as cdn
-participant "<color:#red><$APIGateway>\nAmazon API Gateway" as api
-participant "<color:#D86613><$Lambda></color>\nAmazon Lambda\n(upload)" as lambdaUpload
 participant "<color:#green><$SimpleStorageServiceS3></color>\nAmazon S3" as s3
-participant "<color:#D86613><$Lambda></color>\nAmazon Lambda\n(chat)" as lambdaChat
-participant "<color:#green><$SageMaker></color>\nLLM" as llm
+participant "<color:#red><$APIGateway>\nAmazon API Gateway\n(REST)" as api1
+participant "<color:#red><$APIGateway>\nAmazon API Gateway\n(WeSocket)" as api2
+participant "<color:#D86613><$Lambda></color>\nAmazon Lambda\n(history)" as lambdaHistory
+participant "<color:#D86613><$Lambda></color>\nAmazon Lambda\n(chat-ws)" as lambdaChat
 participant "<color:#blue><$DynamoDB></color>\nDynamoDB" as dynamodb
+participant "<color:#green><$SageMaker></color>\nBedrock" as llm
+
+user -> cdn : Load Webpage
+
+cdn -> s3 ++:
+
+s3 -> cdn --:
+
+cdn -> user: html, css, js
 
 
+user -> cdn: /history
 
+cdn -> api1 --: /history
 
-user -> cdn: POST /chat (type='text')
+api1 -> lambdaHistory ++: /history
 
-cdn -> api: POST /chat (type='text')
+lambdaHistory -> dynamodb ++: load history
 
-api -> lambdaChat ++ : Invokes lambda
+dynamodb -> lambdaHistory --: chat history
 
-lambdaChat -> llm ++: question 
+lambdaHistory -> api1 --: 200OK (chat history)
+
+api1 -> cdn: 200OK (chat history)
+
+cdn -> user: 200OK (chat history)
+
+user -> api2: msg (question)
+
+api2 -> lambdaChat ++: msg (question)
+
+lambdaChat -> dynamodb ++: load chat history
+
+dynamodb -> lambdaChat --: chat history
+
+lambdaChat -> llm ++: question + chat history
 
 llm -> lambdaChat --: 200OK (answer)
 
-lambdaChat -> dynamodb ++: Store call log
+lambdaChat -> api2 --: msg (answer)
 
-dynamodb -> lambdaChat --: 200OK
-
-lambdaChat -> api --: 200OK (answer)
-
-api -> cdn: 200OK (answer)
-
-cdn -> user: 200OK (answer)
+api2 -> user: msg (answer)
 
 @enduml

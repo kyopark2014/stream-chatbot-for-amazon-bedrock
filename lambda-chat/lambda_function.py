@@ -59,55 +59,29 @@ llm = Bedrock(
 
 map = dict() # Conversation
 
-def get_prompt_template(query, convType):
+def get_prompt_template(query):
     # check korean
     pattern_hangul = re.compile('[\u3131-\u3163\uac00-\ud7a3]+')
     word_kor = pattern_hangul.search(str(query))
     print('word_kor: ', word_kor)
 
     if word_kor:    
-        if convType=='qa':
-            condense_template = """아래 문맥(context)을 참조했음에도 답을 알 수 없다면, 솔직히 모른다고 말합니다.
-            
-            Current conversation:
-            {history}
-            
-            Human: {input}
-            
-            Assistant:"""
-        elif convType == "translation":
-            condense_template = """
-            
-            Human: 다음을 영어로 번역해줘:{input}
-            
-            Assistant:"""
-        
-        else: # normal
-            condense_template = """다음은 Human과 Assistant의 친근한 대화입니다. Assistant은 상황에 맞는 구체적인 세부 정보를 충분히 제공합니다. 아래 문맥(context)을 참조했음에도 답을 알 수 없다면, 솔직히 모른다고 말합니다.
+        condense_template = """다음은 Human과 Assistant의 친근한 대화입니다. Assistant은 상황에 맞는 구체적인 세부 정보를 충분히 제공합니다. 아래 문맥(context)을 참조했음에도 답을 알 수 없다면, 솔직히 모른다고 말합니다.
 
-            Current conversation:
-            {history}
+        Current conversation:
+        {history}
             
-            Human: {input}
+        Human: {input}
             
-            Assistant:"""
+        Assistant:"""
     else:  # English
-        if convType=="translation": 
-            condense_template = """
+        condense_template = """Using the following conversation, answer friendly for the newest question. If you don't know the answer, just say that you don't know, don't try to make up an answer. You will be acting as a thoughtful advisor.
+
+        {history}
             
-            Human: 다음을 한국어로 번역해줘:{input}
+        Human: {input}
 
-            Assistant:"""
-        else:
-            condense_template = """Using the following conversation, answer friendly for the newest question. If you don't know the answer, just say that you don't know, don't try to make up an answer. You will be acting as a thoughtful advisor.
-
-            {history}
-            
-            Human: {input}
-
-            Assistant:"""
-
-        #claude_prompt = PromptTemplate.from_template("""The following is a friendly conversation between a human and an AI. The AI is talkative and provides lots of specific details from its context. If the AI does not know the answer to a question, it truthfully says it does not know.
+        Assistant:"""
     
     return PromptTemplate.from_template(condense_template)
 
@@ -259,8 +233,6 @@ def lambda_handler(event, context):
     print('type: ', type)
     body = event['body']
     print('body: ', body)
-    convType = event['convType']
-    print('convType: ', convType)
 
     global modelId, llm, parameters, conversation, conversationMode, map, chat_memory
 
@@ -320,12 +292,8 @@ def lambda_handler(event, context):
                 msg  = "The chat memory was intialized in this session."
             else:            
                 if conversationMode == 'true':
-                    if convType == 'translation': 
-                        PROMPT = get_prompt_template(text, convType)
-                        msg = llm(PROMPT.format(input=text))
-                    else:    
-                        conversation.prompt = get_prompt_template(text, convType)
-                        msg = conversation.predict(input=text)
+                    conversation.prompt = get_prompt_template(text)
+                    msg = conversation.predict(input=text)
 
                     # extract chat history for debug
                     chats = chat_memory.load_memory_variables({})

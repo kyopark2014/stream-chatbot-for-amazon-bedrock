@@ -146,12 +146,6 @@ if(userId=="") {
 }
 console.log('userId: ', userId);
 
-let conversationType = localStorage.getItem('convType'); // set convType if exists 
-if(conversationType=="") {
-    conversationType = "normal";
-}
-console.log('conversationType: ', conversationType);
-
 for (i=0;i<maxMsgItems;i++) {
     msglist.push(document.getElementById('msgLog'+i));
 
@@ -178,8 +172,6 @@ else {
     addNotifyMessage("Start chat with Amazon Bedrock");             
     addReceivedMessage(uuidv4(), "Welcome to Amazon Bedrock. Use the conversational chatbot and summarize documents, TXT, PDF, and CSV. ")           
 }
-
-
 
 // get history
 function getAllowTime() {    
@@ -237,8 +229,7 @@ function onSend(e) {
                 "request_id": requestId,
                 "request_time": requestTime,        
                 "type": "text",
-                "body": message.value,
-                "convType": conversationType
+                "body": message.value
             })
         }
         else {
@@ -490,8 +481,7 @@ attachFile.addEventListener('click', function(){
                                     "request_id": requestId,
                                     "request_time": requestTime,
                                     "type": "document",
-                                    "body": filename,
-                                    "convType": conversationType
+                                    "body": filename
                                 })
                             }
                             else {
@@ -555,8 +545,7 @@ function sendRequest(text, requestId, requestTime) {
         "request_id": requestId,
         "request_time": requestTime,
         "type": "text",
-        "body":text,
-        "convType": conversationType
+        "body":text
     }
     console.log("request: " + JSON.stringify(requestObj));
 
@@ -595,8 +584,7 @@ function sendRequestForSummary(object, requestId, requestTime) {
         "request_id": requestId,
         "request_time": requestTime,
         "type": "document",
-        "body": object,
-        "convType": conversationType
+        "body": object
     }
     console.log("request: " + JSON.stringify(requestObj));
 
