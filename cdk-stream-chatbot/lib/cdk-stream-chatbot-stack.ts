@@ -157,6 +157,7 @@ export class CdkStreamChatbotStack extends cdk.Stack {
     const api = new apiGateway.RestApi(this, `api-chatbot-for-${projectName}`, {
       description: 'API Gateway for chatbot',
       endpointTypes: [apiGateway.EndpointType.REGIONAL],
+      restApiName: 'http-api-'+projectName,
       binaryMediaTypes: ['application/pdf', 'text/plain', 'text/csv'], 
       deployOptions: {
         stageName: stage,
@@ -392,7 +393,7 @@ export class CdkStreamChatbotStack extends cdk.Stack {
     const websocketapi = new apigatewayv2.CfnApi(this, `ws-api-for-${projectName}`, {
       description: 'API Gateway for chatbot using websocket',
       apiKeySelectionExpression: "$request.header.x-api-key",
-      name: 'api-'+projectName,
+      name: 'ws-api-'+projectName,
       protocolType: "WEBSOCKET", // WEBSOCKET or HTTP
       routeSelectionExpression: "$request.body.action",     
     });  
