@@ -327,6 +327,19 @@ const connection_url = `https://${websocketapi.attrApiId}.execute-api.${region}.
 
 ### 실행결과
 
+"서울을 여행하고 싶어. 무엇을 타고 여행하는것이 좋을까?"라고 입력하면 서울의 정보를 알려줍니다.
+
+![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/ec1940d6-3629-453b-87c9-680e30c72dbb)
+
+대명사를 이용해 "그럼 그 도시에서 지하철 요금은 얼마야?"라고 문의하면 아래와 같이 서울 지하철 요금을 알려줍니다. 대화이력을 통해 서울의 지하철 요금을 알려주었지만, 2023년 10월에 지하철 요금이 150원이 올라서 1400원(교통카드 기준)이므로 최신 정보를 반영하고 못하고 있음을 알 수 있습니다.
+
+![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/4ef5c736-7f6a-4653-865b-dbd13609da61)
+
+서울과 지하철이라는 단어를 넣지 않고 "그럼 환승도 가능해?"로 물었을때 아래와 같이 이전 대화이력(chat history)을 이용하여 서울 지하철의 환승에 대해 설명하여 줍니다.
+
+![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/8fadc6e1-503e-4fba-9a73-a48f04ca923a)
+
+
 ## 리소스 정리하기 
 
 더이상 인프라를 사용하지 않는 경우에 아래처럼 모든 리소스를 삭제할 수 있습니다. [Cloud9 console](https://ap-northeast-2.console.aws.amazon.com/cloud9control/home?region=ap-northeast-2#/)에 접속하여 아래와 같이 삭제를 합니다.
