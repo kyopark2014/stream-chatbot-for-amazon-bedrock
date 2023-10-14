@@ -70,6 +70,8 @@ conversation = ConversationChain(llm=llm, verbose=False, memory=chat_memory)
 사용자가 보낸 메시지가 Websocket을 이용하여 API Gateway를 거쳐서 Lambda-chat에 전달되면, Lambda에서는 아래와 같이 event에서 connectionId와 routeKey를 추출할 수 있습니다. routeKey가 "default"일때 사용자게 보낸 메시지가 들어오는데 여기서 'body"를 추출하여, json포맷의 데이터에서 사용자의 입력인 'text'를 추출합니다. 이후 conversation을 이용하여 LLM으로 부터 응답을 구합니다. 
 
 ```python
+conversation = ConversationChain(llm=llm, verbose=False, memory=chat_memory)
+
 def lambda_handler(event, context):
     if event['requestContext']: 
         connectionId = event['requestContext']['connectionId']
