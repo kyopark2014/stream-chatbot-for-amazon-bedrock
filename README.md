@@ -16,7 +16,7 @@ Stream 방식은 하나의 요청에 여러번의 응답을 얻게 되므로, HT
 
 - 단계1: CloudFront 주소로 사용자가 브라우저를 이용하여 접속하면, Amazon S3에서 HTML, CSS, JS등의 파일을 전달합니다. 이때 로그인을 수행하고 채팅 화면으로 진입합니다.
 
-- 단계2: 사용자 아이디를 이용하여 '/history' API로 채팅이력을 요청합니다. 이 요청은 API Gateway를 [lambda-history](./lambda-gethistory/index.js)에 전달됩니다. 이후 DynamoDB에서 채팅 이력을 조회한후에 다시 API Gateway와 Lambda-history를 통해 사용자에게 전달합니다.
+- 단계2: [Client](./html/chat.js)는 사용자 아이디를 이용하여 '/history' API로 채팅이력을 요청합니다. 이 요청은 API Gateway를 [lambda-history](./lambda-gethistory/index.js)에 전달됩니다. 이후 DynamoDB에서 채팅 이력을 조회한후에 다시 API Gateway와 Lambda-history를 통해 사용자에게 전달합니다.
 
 - 단계3: Client가 API Gateway로 WebSocket 연결을 시도하면, API Gateway를 거쳐서 [lambda-chat-ws](./lambda-chat-ws/lambda_function.py)로 Websocket connection event가 전달됩니다. 이후 사용자가 메시지를 입력하면, API Gateway를 거쳐서 [lambda-chat-ws](./lambda-chat-ws/lambda_function.py)에 메시지가 전달됩니다.
   
