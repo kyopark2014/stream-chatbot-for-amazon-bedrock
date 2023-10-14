@@ -357,7 +357,7 @@ cdk destroy --all
 
 ## 결론
 
-Amazon Bedrock이 상용이 되면서 AWS 환경에서 한국어 챗봇을 Anthropic Claude를 이용하여 쉽게 구현할 수 있게 되었습니다. 본 게시글에서는 Anthropic의 Claude LLM을 이용하여, 대표적인 LLM 어플리케이션 개발 프레임워크인 LangChain로 한국어 Chatbot을 만들었습니다. 이때 WebSocket을 이용하여 Client와 서버를 연결하여, Stream 형태로 답변을 표시할 수 있었습니다. Amazon Bedrock은 다양한 Foundation Model로 쉽게 생성형 AI 어플리케이션을 개발할 수 있도록 도와줍니다. 또한 한국어 chatbot을 위한 인프라는 서버리스로 구성해서 인프라 관리에 대한 부담을 줄였고, AWS CDK를 이용하여 인프라의 배포 및 관리를 쉽게할 수 있도록 하였습니다. 대용량 언어 모델을 이용한 한국어 Chatbot은 기존 Role 방식의 Chatbot 대비 훨씬 개선된 대화능력을 보여줍니다. 향후 AWS Bedrock을 이용하여 다양한 어플리케이션을 쉽고 효과적으로 개발할 수 있을것으로 기대됩니다. 
+Amazon Bedrock이 상용이 되면서 AWS 환경에서 한국어 챗봇을 쉽게 구현할 수 있게 되었습니다. 본 게시글에서는 Anthropic의 Claude LLM과 대표적인 LLM 어플리케이션 개발 프레임워크인 LangChain을 이용하여 한국어 chatbot을 만들었습니다. 이때 WebSocket을 이용하여 Client와 서버를 연결하였고, Stream 형태로 답변을 표시할 수 있었습니다. Amazon Bedrock은 다양한 Foundation Model로 쉽게 생성형 AI 어플리케이션을 개발할 수 있도록 도와줍니다. 또한 한국어 chatbot을 위한 인프라는 서버리스로 구성해서 인프라 관리에 대한 부담을 줄였고, AWS CDK를 이용하여 인프라의 배포 및 관리를 쉽게할 수 있도록 하였습니다. 대용량 언어 모델을 이용한 한국어 chatbot은 기존 Role 방식의 훨씬 개선된 대화 능력을 보여줍니다. 향후 Amazon Bedrock을 이용하여 다양한 어플리케이션을 쉽고 효과적으로 개발할 수 있을것으로 기대됩니다. 
 
 ## 실습 코드 및 도움이 되는 참조 블로그
 
