@@ -14,7 +14,6 @@ console.log(userInput.value);
 function onSubmit(e) {
     e.preventDefault();
     console.log(userInput.value);
-    console.log(convtypeInput.value);
 
     localStorage.setItem('userId',userInput.value);
     console.log('Save Profile> userId:', userInput.value)    

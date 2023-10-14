@@ -344,5 +344,6 @@ def lambda_handler(event, context):
 
     return {
         'statusCode': 200,
+        'request_id': requestId,
         'msg': msg,
     }

@@ -1,4 +1,4 @@
-const protocol = 'WEBSOCKET'; // WEBSOCKET or HTTP
+const protocol = 'HTTP'; // WEBSOCKET or HTTP
 const endpoint = 'wss://asp2qjhyhl.execute-api.ap-northeast-2.amazonaws.com/dev';
 const langstate = 'korean'; // korean or english
 let webSocket
@@ -534,9 +534,6 @@ function sendRequest(text, requestId, requestTime) {
             console.log("response: " + xhr.readyState + ', xhr.status: '+xhr.status);
 
             getResponse(requestId);
-        }
-        else {
-            console.log("response: " + xhr.readyState + ', xhr.status: '+xhr.status);
         }
     };
 
