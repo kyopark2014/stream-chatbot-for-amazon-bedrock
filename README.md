@@ -7,7 +7,7 @@ Stream 방식은 하나의 요청에 여러번의 응답을 얻게 되므로, HT
 
 ## Architecture 개요
 
-전체적인 Architecture는 아래와 같습니다. 사용자는 Web Client를 이용하여 로그인하면, 이전 대화 이력을 확인할 수 있습니다. 이후 질문을 입력하면 WebSocket을 이용하여 API Gateway를 거쳐 Lambda로 질문이 전달됩니다. Lambda는 DynamoDB에서 채팅이력을 확인하여 채팅을 위한 메모리를 할당합니다. 이후 질문과 채팅이력을 포함한 메시지를 Amazon Bedrock에 전달하여 질문에 대한 답변을 요청합니다. Bedrock의 Anthropic Claude 모델을 활용하여 응답을 얻은후 답변을 전달하면 Lambda와 API Gateway를 거쳐사 사용자에게 전달되게 됩니다.
+전체적인 Architecture는 아래와 같습니다. 사용자는 Web Client를 이용하여 로그인하면, 이전 대화 이력을 확인할 수 있습니다. 이후 질문을 입력하면 WebSocket을 이용하여 API Gateway를 거쳐 Lambda로 질문이 전달됩니다. Lambda는 DynamoDB에서 채팅이력을 확인하여 채팅을 위한 메모리를 할당합니다. 이후 질문과 채팅이력을 포함한 메시지를 Amazon Bedrock에 전달하여 질문에 대한 답변을 요청합니다. Bedrock의 Anthropic Claude 모델을 활용하여 응답을 얻은후 답변을 전달하면 Lambda와 API Gateway를 거쳐사 사용자에게 전달되게 됩니다. 전체 인프라는 [AWS CDK](https://aws.amazon.com/ko/cdk/)를 이용해 쉽게 배포되고 관리할 수 있습니다.
 
 <img src="https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/6e0e5f54-f455-4d65-95ed-438c89baafed" width="800">
 
