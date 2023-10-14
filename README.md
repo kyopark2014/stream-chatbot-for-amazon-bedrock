@@ -321,85 +321,29 @@ const connection_url = `https://${websocketapi.attrApiId}.execute-api.${region}.
 
 - [AWS Account 생성](https://repost.aws/ko/knowledge-center/create-and-activate-aws-account)
 
-
 ### CDK를 이용한 인프라 설치
 
-여기서는 [AWS Cloud9](https://aws.amazon.com/ko/cloud9/)에서 [AWS CDK](https://aws.amazon.com/ko/cdk/)를 이용하여 인프라를 설치합니다. 또한 편의상 서울 리전을 통해 실습합니다.
+[deployment.md](./deployment.md)에 따라 인프라를 설치합니다.
 
-1) [Cloud9 Console](https://ap-northeast-2.console.aws.amazon.com/cloud9control/home?region=ap-northeast-2#/create)에 접속하여 [Create environment]-[Name]에서 “chatbot”으로 이름을 입력하고, EC2 instance는 “m5.large”를 선택합니다. 나머지는 기본값을 유지하고, 하단으로 스크롤하여 [Create]를 선택합니다.
+### 실행결과
 
-![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/c85c2ef5-4f96-4528-b5d4-ab9d3e52324e)
+## 리소스 정리하기 
 
-2) [Environment](https://ap-northeast-2.console.aws.amazon.com/cloud9control/home?region=ap-northeast-2#/)에서 “chatbot”를 [Open]한 후에 아래와 같이 터미널을 실행합니다.
-
-![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/fcf24f93-9ab3-4905-be8d-8146c7371951)
-
-3) EBS 크기 변경
-
-아래와 같이 스크립트를 다운로드 합니다. 
+더이상 인프라를 사용하지 않는 경우에 아래처럼 모든 리소스를 삭제할 수 있습니다. [Cloud9 console](https://ap-northeast-2.console.aws.amazon.com/cloud9control/home?region=ap-northeast-2#/)에 접속하여 아래와 같이 삭제를 합니다.
 
 ```text
-curl https://raw.githubusercontent.com/kyopark2014/technical-summary/main/resize.sh -o resize.sh
+cdk destroy --all
 ```
 
-이후 아래 명령어로 용량을 80G로 변경합니다.
-```text
-chmod a+rx resize.sh && ./resize.sh 80
-```
+## 결론
 
+AWS 서울 리전에서 Amazon Bedrock과 vector store를 이용하여 질문과 답변(Question/Answering)을 수행하는 chatbot을 구현하였습니다. Amazon Bedrock은 여러 종류의 대용량 언어 모델중에 한개를 선택하여 사용할 수 있습니다. 여기서는 Amazon Titan을 이용하여 RAG 동작을 구현하였고, 대용량 언어 모델의 환각(hallucination) 문제를 해결할 수 있었습니다. 또한 Chatbot 어플리케이션 개발을 위해 LangChain을 활용하였고, IaC(Infrastructure as Code)로 AWS CDK를 이용하였습니다. 대용량 언어 모델은 향후 다양한 어플리케이션에서 효과적으로 활용될것으로 기대됩니다. Amazon Bedrock을 이용하여 대용량 언어 모델을 개발하면 기존 AWS 인프라와 손쉽게 연동하고 다양한 어플리케이션을 효과적으로 개발할 수 있습니다.
 
-4) 소스를 다운로드합니다.
+## 실습 코드 및 도움이 되는 참조 블로그
 
-```java
-git clone https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock
-```
+아래의 링크에서 실습 소스 파일 및 기계 학습(ML)과 관련된 자료를 확인하실 수 있습니다.
 
-5) cdk 폴더로 이동하여 필요한 라이브러리를 설치합니다.
-
-```java
-cd stream-chatbot-for-amazon-bedrock/cdk-stream-chatbot/ && npm install
-```
-
-7) CDK 사용을 위해 Boostraping을 수행합니다.
-
-아래 명령어로 Account ID를 확인합니다.
-
-```java
-aws sts get-caller-identity --query Account --output text
-```
-
-아래와 같이 bootstrap을 수행합니다. 여기서 "account-id"는 상기 명령어로 확인한 12자리의 Account ID입니다. bootstrap 1회만 수행하면 되므로, 기존에 cdk를 사용하고 있었다면 bootstrap은 건너뛰어도 됩니다.
-
-```java
-cdk bootstrap aws://account-id/ap-northeast-2
-```
-
-8) 인프라를 설치합니다.
-
-```java
-cdk deploy --all
-```
-
-9) 아래와 같이 webSocketUrl을 확인합니다. 여기서는 "wss://etl2hxx4la.execute-api.ap-northeast-1.amazonaws.com/dev" 입니다.
-
-![noname](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/12d900e6-ec6c-40de-b867-284612ecbb4f)
-
-10) 아래와 같이 "/html/chat.js"파일을 열어서, endpoint를 업데이트합니다.
-
-![noname](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/99e03119-e8f8-4961-ab13-6f9bb149acbe)
-
-11) 아래와 같이 "UpdateCommendforstreamchatbotsimple"에 있는 명령어를 확인합니다.
-
-![noname](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/04e72e5f-7f99-440e-a111-c50fad988b3c)
-
-아래와 같이 명령어를 입력합니다. 여기서는 "aws s3 cp ../html/chat.js s3://storage-for-stream-chatbot-simple-ap-northeast-1"를 이용합니다.
-
-![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/bf9e0d0a-cdc8-4931-8a20-182a89aded06)
-
-12) 설치가 완료되면 브라우저에서 아래와 같이 WebUrl를 확인하여 브라우저를 이용하여 접속합니다.
-
-![noname](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/c2261bd4-1dcf-460d-bfed-a80780f396e8)
-
-
-
+- [Amazon SageMaker JumpStart를 이용하여 Falcon Foundation Model기반의 Chatbot 만들기](https://aws.amazon.com/ko/blogs/tech/chatbot-based-on-falcon-fm/)
+- [Amazon SageMaker JumpStart와 Vector Store를 이용하여 Llama 2로 Chatbot 만들기](https://aws.amazon.com/ko/blogs/tech/sagemaker-jumpstart-vector-store-llama2-chatbot/)
+- [VARCO LLM과 Amazon OpenSearch를 이용하여 한국어 Chatbot 만들기](https://aws.amazon.com/ko/blogs/tech/korean-chatbot-using-varco-llm-and-opensearch/)
 
