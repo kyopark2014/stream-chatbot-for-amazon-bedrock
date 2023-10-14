@@ -535,7 +535,7 @@ export class CdkStreamChatbotStack extends cdk.Stack {
     }); 
 
     // deploy components
-    new componentDeployment(scope, "deployment-stream-chatbot-simple", websocketapi.attrApiId)  
+    new componentDeployment(scope, `deployment-for-${projectName}`, websocketapi.attrApiId)  
 
     //const wsOriginRequestPolicy = new cloudFront.OriginRequestPolicy(this, `webSocketPolicy`, {
     //  originRequestPolicyName: "webSocketPolicy",
