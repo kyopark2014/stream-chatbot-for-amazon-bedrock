@@ -12,7 +12,7 @@
 
 4) Amazon Bedrock은 사용자의 질문과 채팅이력을 이용하여 적절한 답변(answer)를 구하여 사용자에게 전달합니다. 여기에서는 한글 성능이 우수한 Anthropic의 Claude 모델을 사용하였습니다. 
 
-![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/0c277cb6-5c97-48ed-a098-eedd4f5db5cd)
+![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/6e0e5f54-f455-4d65-95ed-438c89baafed)
 
 
 ## 서버리스 기반의 Websocket 사용하기
