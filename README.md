@@ -2,12 +2,12 @@
 
 [2023년 9월 Amazon Bedrock의 상용](https://aws.amazon.com/ko/about-aws/whats-new/2023/09/amazon-bedrock-generally-available/)으로 [Amazon Titan](https://aws.amazon.com/ko/bedrock/titan/), [Anthropic Claude](https://aws.amazon.com/ko/bedrock/claude/)등의 다양한 LLM (Large Language Model)을 AWS 환경에서 편리하게 사용할 수 있게 되었습니다. 특히 Anthropic의 Claude 모델은 한국어를 비교적 잘 지원하고 있습니다. Chatbot과 원활한 대화를 위해서는 사용자의 질문(Question)에 대한 전체 답변(Answer)을 얻을 때까지 기다리기 보다는 [Stream 형태](https://blog.langchain.dev/streaming-support-in-langchain/)로 대화하듯이 보여주는것이 사용성에서 좋습니다. 본 게시글에서는 [Amazon Bedrock](https://aws.amazon.com/ko/bedrock/)을 사용하여 Stream을 지원하는 한국어 Chatbot을 만드는 방법을 설명합니다. 
 
-Stream 방식은 하나의 요청에 여러번의 응답을 얻게 되므로, HTTP 방식보다는 세션을 통해 메시지를 교환하는 Websocket 방식이 유용합니다. 또한 서버리스(serverless) 아키텍처를 사용하면 인프라의 유지보수에 대한 부담없이 인프라를 효율적으로 관리할 수 있습니다. 여기서는 서버리스인 [Amazon API Gateway를 이용해 Client와 Websocket을 연결](https://docs.aws.amazon.com/ko_kr/apigateway/latest/developerguide/apigateway-websocket-api-overview.html)하고 [AWS Lambda](https://aws.amazon.com/ko/pm/lambda/?nc1=h_ls)를 이용하여 세션을 관리합니다. 본 게시글에서 사용하는 Client는 Web으로 제공되고, 채팅 이력은 로컬 디바이스가 아니라 서버에 저정되게 됩니다. [Amazon DynamoDB](https://aws.amazon.com/ko/dynamodb/)는 Json형태로 채팅이력을 저장하는데 유용합니다. 이와같이 Client에서는 로그인시에 DynamoDB에 저장된 채팅이력을 로드하여 보여줍니다. 또한 채팅이력은 LLM의 질의시에도 유용하게 사용되므로, Lambda는 채팅시작시에 사용자 아이디를 이용하여 DynamoDB에서 채팅이력을 로드하여 로컬 메모리에 저장하여 활용합니다. 
+Stream 방식은 하나의 요청에 여러번의 응답을 얻게 되므로, HTTP 방식보다는 세션을 통해 메시지를 교환하는 WebSocket 방식이 유용합니다. 또한 서버리스(serverless) 아키텍처를 사용하면 인프라의 유지보수에 대한 부담없이 인프라를 효율적으로 관리할 수 있습니다. 여기서는 서버리스인 [Amazon API Gateway를 이용해 Client와 WebSocket을 연결](https://docs.aws.amazon.com/ko_kr/apigateway/latest/developerguide/apigateway-WebSocket-api-overview.html)하고 [AWS Lambda](https://aws.amazon.com/ko/pm/lambda/?nc1=h_ls)를 이용하여 세션을 관리합니다. 본 게시글에서 사용하는 Client는 Web으로 제공되고, 채팅 이력은 로컬 디바이스가 아니라 서버에 저정되게 됩니다. [Amazon DynamoDB](https://aws.amazon.com/ko/dynamodb/)는 Json형태로 채팅이력을 저장하는데 유용합니다. 이와같이 Client에서는 로그인시에 DynamoDB에 저장된 채팅이력을 로드하여 보여줍니다. 또한 채팅이력은 LLM의 질의시에도 유용하게 사용되므로, Lambda는 채팅시작시에 사용자 아이디를 이용하여 DynamoDB에서 채팅이력을 로드하여 로컬 메모리에 저장하여 활용합니다. 
 
 
 ## Architecture 개요
 
-전체적인 Architecture는 아래와 같습니다. 사용자는 Web Client를 이용하여 로그인하면, 이전 대화이력을 확인할 수 있습니다. 이후 질문을 입력하면 Websocket을 이용하여 API Gateway를 거쳐 Lambda로 질문이 전달됩니다. Lambda는 DynamoDB에서 채팅이력을 확인하여 채팅을 위한 메모리를 할당합니다. 이후 질문과 채팅이력을 포함한 메시지를 Amazon Bedrock에 전달하여 질문에 대한 답변을 요청합니다. Bedrock의 Anthropic Claude 모델을 활용하여 응답을 얻은후 답변을 전달하면 Lambda와 API Gateway를 거쳐사 사용자에게 전달되게 됩니다.
+전체적인 Architecture는 아래와 같습니다. 사용자는 Web Client를 이용하여 로그인하면, 이전 대화 이력을 확인할 수 있습니다. 이후 질문을 입력하면 WebSocket을 이용하여 API Gateway를 거쳐 Lambda로 질문이 전달됩니다. Lambda는 DynamoDB에서 채팅이력을 확인하여 채팅을 위한 메모리를 할당합니다. 이후 질문과 채팅이력을 포함한 메시지를 Amazon Bedrock에 전달하여 질문에 대한 답변을 요청합니다. Bedrock의 Anthropic Claude 모델을 활용하여 응답을 얻은후 답변을 전달하면 Lambda와 API Gateway를 거쳐사 사용자에게 전달되게 됩니다.
 
 <img src="https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/6e0e5f54-f455-4d65-95ed-438c89baafed" width="800">
 
@@ -18,7 +18,7 @@ Stream 방식은 하나의 요청에 여러번의 응답을 얻게 되므로, HT
 
 - 단계2: [Client](./html/chat.js)는 사용자 아이디를 이용하여 '/history' API로 채팅이력을 요청합니다. 이 요청은 API Gateway를 [lambda-history](./lambda-gethistory/index.js)에 전달됩니다. 이후 DynamoDB에서 채팅 이력을 조회한 후에 다시 API Gateway와 [lambda-history](./lambda-gethistory/index.js)를 통해 사용자에게 전달합니다.
 
-- 단계3: Client가 API Gateway로 WebSocket 연결을 시도하면, API Gateway를 거쳐서 [lambda-chat-ws](./lambda-chat-ws/lambda_function.py)로 Websocket connection event가 전달됩니다. 이후 사용자가 메시지를 입력하면, API Gateway를 거쳐서 [lambda-chat-ws](./lambda-chat-ws/lambda_function.py)로 메시지가 전달됩니다.
+- 단계3: Client가 API Gateway로 WebSocket 연결을 시도하면, API Gateway를 거쳐서 [lambda-chat-ws](./lambda-chat-ws/lambda_function.py)로 WebSocket connection event가 전달됩니다. 이후 사용자가 메시지를 입력하면, API Gateway를 거쳐서 [lambda-chat-ws](./lambda-chat-ws/lambda_function.py)로 메시지가 전달됩니다.
   
 - 단계4: [lambda-chat-ws](./lambda-chat-ws/lambda_function.py)은 사용자 아이디를 이용하여 DynamoDB의 기존 채팅이력을 읽어와서, 채팅 메모리에 저장합니다.
 
@@ -36,9 +36,9 @@ Stream 방식은 하나의 요청에 여러번의 응답을 얻게 되므로, HT
 
 전체 시스템의 상세 구현에 대하여 아래와 같이 설명합니다.
 
-### 서버리스 기반으로 Websocket 연결하기
+### 서버리스 기반으로 WebSocket 연결하기
 
-[Client](./html/chat.js)는 서버리스인 API Gateway를 이용하여 [Websocket과 연결](https://docs.aws.amazon.com/ko_kr/apigateway/latest/developerguide/apigateway-websocket-api-overview.html)합니다. 이때 client가 연결하는 endpoint는 API Gateway 주소입니다. 아래와 같이 WebSocket을 선언한 후에 onmessage로 메시지가 들어오면, event의 'data'에서 메시지를 추출합니다. 세션을 유지하기 위해 일정간격으로 keep alive 동작을 수행합니다. 
+[Client](./html/chat.js)는 서버리스인 API Gateway를 이용하여 [WebSocket과 연결](https://docs.aws.amazon.com/ko_kr/apigateway/latest/developerguide/apigateway-WebSocket-api-overview.html)합니다. 이때 client가 연결하는 endpoint는 API Gateway 주소입니다. 아래와 같이 WebSocket을 선언한 후에 onmessage로 메시지가 들어오면, event의 'data'에서 메시지를 추출합니다. 세션을 유지하기 위해 일정간격으로 keep alive 동작을 수행합니다. 
 
 ```java
 const ws = new WebSocket(endpoint);
@@ -63,7 +63,7 @@ ws.onclose = function () {
 };
 ```
 
-발신 메시지는 JSON 포맷으로 아래와 같이 userId, 요청시간, 메시지 타입과 메시지를 포함합니다. 발신시 [websocket의 send()](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/send)을 이용하여 아래와 같이 발신합니다. 만약 발신시점에 세션이 연결되어 있지 않다면 연결하고 재시도 하도록 알림을 표시합니다.
+발신 메시지는 JSON 포맷으로 아래와 같이 userId, 요청시간, 메시지 타입과 메시지를 포함합니다. 발신시 [WebSocket의 send()](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/send)을 이용하여 아래와 같이 발신합니다. 만약 발신시점에 세션이 연결되어 있지 않다면 연결하고 재시도하도록 알림을 표시합니다.
 
 ```java
 sendMessage({
@@ -74,22 +74,22 @@ sendMessage({
     "body": message.value
 })
 
-webSocket = connect(endpoint, 'initial');
+WebSocket = connect(endpoint, 'initial');
 function sendMessage(message) {
     if(!isConnected) {
-        webSocket = connect(endpoint, 'reconnect');
+        WebSocket = connect(endpoint, 'reconnect');
         
         addNotifyMessage("재연결중입니다. 잠시후 다시시도하세요.");
     }
     else {
-        webSocket.send(JSON.stringify(message));     
+        WebSocket.send(JSON.stringify(message));     
     }     
 }
 ```
 
 ### Stream 사용하기
 
-[lambda-chat-ws](./lambda-chat-ws/lambda_function.py)에서는 Bedrock을 사용하기 위하여 [Boto3로 Bedrock client](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock.html)를 정의합니다. 여기서는 Chatbot은 서울리전을 사용하고, Bedrock은 N.Virginia (us-east-1)을 사용합니다.
+[lambda-chat-ws](./lambda-chat-ws/lambda_function.py)에서는 Bedrock을 사용하기 위하여 아래와 같이 [Boto3로 Bedrock client](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/bedrock.html)를 정의합니다. 여기서는 Chatbot과 관련된 인프라는 서울 리전을 사용하고, Bedrock은 N.Virginia (us-east-1)을 사용합니다.
 
 ```python
 import boto3
@@ -100,7 +100,7 @@ boto3_bedrock = boto3.client(
 )
 ```
 
-아래와 같이 LLM에서 어플리케이션을 편리하게 만드는 프레임워크인 [LangChain](https://docs.langchain.com/docs/)을 사용하여 [Bedrock](https://python.langchain.com/docs/integrations/llms/bedrock)을 정의합니다. 이때 stream으로 출력을 보여줄 수 있도록 streaming을 True로 설정합니다. 또한 StreamingStdOutCallbackHandler을 callback으로 등록합니다.
+아래와 같이 LLM에서 어플리케이션을 편리하게 만드는 프레임워크인 [LangChain](https://docs.langchain.com/docs/)을 사용하여 [Bedrock](https://python.langchain.com/docs/integrations/llms/bedrock)을 정의합니다. 이때 stream으로 출력을 보여줄 수 있도록 streaming을 True로 설정합니다. 또한 [StreamingStdOutCallbackHandler](https://api.python.langchain.com/en/latest/callbacks/langchain.callbacks.streaming_stdout.StreamingStdOutCallbackHandler.html)을 callback으로 등록합니다.
 
 ```python
 from langchain.llms.bedrock import Bedrock
@@ -114,14 +114,14 @@ llm = Bedrock(
     model_kwargs=parameters)
 ```
 
-채팅이력은 [ConversationBufferMemory](https://api.python.langchain.com/en/latest/memory/langchain.memory.buffer.ConversationBufferMemory.html)을 이용하여 chat_memory으로 저장합니다.
+채팅 이력은 [ConversationBufferMemory](https://api.python.langchain.com/en/latest/memory/langchain.memory.buffer.ConversationBufferMemory.html)을 이용하여 chat_memory으로 저장합니다.
 
 ```python
 from langchain.memory import ConversationBufferMemory
 chat_memory = ConversationBufferMemory(human_prefix='Human', ai_prefix='Assistant')
 ```
 
-채팅이력까지 고려한 응답을 구하기 위하여, [ConversationChain](https://js.langchain.com/docs/api/chains/classes/ConversationChain)을 이용합니다. 사용자가 Websocket을 이용하여 API Gateway로 보낸 메시지가 [lambda-chat-ws](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/blob/main/lambda-chat-ws/lambda_function.py)에 전달되면, Lambda에서는 아래와 같이 event에서 connectionId와 routeKey를 추출할 수 있습니다. routeKey가 "default"일때 사용자게 보낸 메시지가 들어오는데 여기서 'body"를 추출하여, json포맷의 데이터에서 사용자의 입력인 'text'를 추출합니다. 이후 아래와 같이 conversation.predict()을 이용하여 LLM에 응답을 요청합니다. 
+채팅 이력까지 고려한 응답을 구하기 위하여, [ConversationChain](https://js.langchain.com/docs/api/chains/classes/ConversationChain)을 이용합니다. 사용자가 WebSocket을 이용하여 API Gateway로 보낸 메시지가 [lambda-chat-ws](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/blob/main/lambda-chat-ws/lambda_function.py)에 전달되면, Lambda에서는 아래와 같이 event에서 connectionId와 routeKey를 추출할 수 있습니다. routeKey가 "default"일때 사용자게 보낸 메시지가 들어오는데 여기서 'body"를 추출하여, json포맷의 데이터에서 사용자의 입력인 'text'를 추출합니다. 이후 아래와 같이 conversation.predict()을 이용하여 LLM에 응답을 요청합니다. 
 
 ```python
 from langchain.chains import ConversationChain
@@ -144,7 +144,7 @@ def lambda_handler(event, context):
         msg = readStreamMsg(connectionId, requestId, msg)
 ```
 
-LLM의 응답은 stream으로 들어오는데, 아래와 같이 stream에서 event를 추출한 후에 sendMessage() 이용하여 client로 전달합니다. 
+LLM의 응답은 stream으로 들어오는데, 아래와 같이 stream에서 event를 추출한 후에 sendMessage() 이용하여 client로 답변을 전달합니다. Client에서 답변 메시지를 구분하기 위해, "request_id"를 함께 전달합니다.  
 
 ```python
 def readStreamMsg(connectionId, requestId, stream):
@@ -161,7 +161,7 @@ def readStreamMsg(connectionId, requestId, stream):
     return msg
 ```
 
-아래와 같이 sendMessage()은 [Boto3의 post_to_connection](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/apigatewaymanagementapi/client/post_to_connection.html)을 이용하여 client로 응답을 전송 합니다. 이때 lambda-chat-ws가 전달하는 Endpoint는 Websocket을 지원하는 API Gateway입니다.
+아래와 같이 sendMessage()은 [Boto3의 post_to_connection](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/apigatewaymanagementapi/client/post_to_connection.html)을 이용하여 client로 응답을 전송 합니다. 이때 lambda-chat-ws가 메시지를 전달하는 Endpoint는 WebSocket을 지원하는 API Gateway입니다.
 
 ```python
 import boto3
@@ -179,7 +179,7 @@ def sendMessage(id, body):
 
 ### 대화 이력의 관리
 
-[client](./html/chat.js)는 이전 채팅이력을 가져오기 위하여 '/history' API와 연결된 [lambda-gethistory](./lambda-gethistory/index.js)로 아래와 같이 요청을 보냅니다.
+[Client](./html/chat.js)는 이전 채팅 이력을 가져오기 위하여 '/history' API와 연결된 [lambda-gethistory](./lambda-gethistory/index.js)로 아래와 같이 사용자 아이디(userId)와 얻어올 시간(allowTime)을 포함한 요청을 전달합니다. 이에 대한 전달받은 history를 풀어서 채팅창에 표시합니다. 
 
 ```javascript
 getHistory(userId, allowTime);
@@ -197,13 +197,10 @@ function getHistory(userId, allowTime) {
             for(let i=0; i<history.length; i++) {
                 if(history[i].type=='text') {                
                     let requestId = history[i].request_id;
-                    console.log("requestId: ", requestId);
                     let timestr = history[i].request_time;
-                    console.log("timestr: ", timestr);
                     let body = history[i].body;
-                    console.log("question: ", body);
                     let msg = history[i].msg;
-                    console.log("answer: ", msg);
+
                     addSentMessage(requestId, timestr, body)
                     addReceivedMessage(requestId, msg);                            
                 }                 
@@ -265,7 +262,7 @@ try {
 }
 ```
 
-[lambda-chat-ws](./lambda-chat-ws/lambda_function.py)는 아래와 같이 채팅 이력을 저장하는 map을 관리합니다. 사용자의 요청에서 userId를 추출하여 lambda-chat-ws가 채팅이력을 가지고 있지 않은 경우에 chat_memory를 생성하여, 기존 이력을 load_chatHistory()로 읽어서 ConversationChain으로 관리합니다.
+[lambda-chat-ws](./lambda-chat-ws/lambda_function.py)는 아래와 같이 채팅 이력을 저장하는 map을 관리합니다. 사용자의 요청에서 userId를 추출하여 [lambda-chat-ws](./lambda-chat-ws/lambda_function.py)가 채팅 이력을 가지고 있지 않은 경우에 chat_memory를 생성하여, 기존 이력은 load_chatHistory()로 읽어서 ConversationChain으로 관리합니다.
 
 ```python
 map = dict() # Conversation
@@ -282,7 +279,7 @@ else:
     conversation = ConversationChain(llm=llm, verbose=False, memory=chat_memory)
 ```
 
-load_chatHistory()은 아래와 같이 userId와 allowTime로 채팅 이력을 조회하여 chat_memory에 저장합니다.
+load_chatHistory()은 아래와 같이 userId와 allowTime를 이용하여 DynamoDB에서 채팅 이력을 조회하여 chat_memory에 저장합니다.
 
 ```python
 def load_chatHistory(userId, allowTime, chat_memory):
@@ -308,18 +305,18 @@ def load_chatHistory(userId, allowTime, chat_memory):
 
 ### WebSocket을 지원하는 API Gateway를 구현하기
 
-[cdk-stream-chatbot-stack.ts](./cdk-stream-chatbot/lib/cdk-stream-chatbot-stack.ts)에서는 아래와 같이 Websocket을 지원하는 API Gateway를 정의합니다. 여기서 [client](./html/chat.js)가 접속하는 API Gateway의 Endpoint는 wss_url이고, [lambda-chat-ws](./lambda-chat-ws/lambda_function.py)가 접속하는 API Gateway의 endpoint는 connection_url입니다.
+[cdk-stream-chatbot-stack.ts](./cdk-stream-chatbot/lib/cdk-stream-chatbot-stack.ts)에서는 아래와 같이 WebSocket을 지원하는 API Gateway를 정의합니다. 여기서 [client](./html/chat.js)가 접속하는 API Gateway의 Endpoint는 wss_url이고, [lambda-chat-ws](./lambda-chat-ws/lambda_function.py)가 접속하는 API Gateway의 endpoint는 connection_url입니다.
 
 ```typescript
-const websocketapi = new apigatewayv2.CfnApi(this, `ws-api-for-${projectName}`, {
-    description: 'API Gateway for chatbot using websocket',
+const WebSocketapi = new apigatewayv2.CfnApi(this, `ws-api-for-${projectName}`, {
+    description: 'API Gateway for chatbot using WebSocket',
     apiKeySelectionExpression: "$request.header.x-api-key",
     name: 'ws-api-for-' + projectName,
-    protocolType: "WEBSOCKET", // WEBSOCKET or HTTP
+    protocolType: "WebSocket", 
     routeSelectionExpression: "$request.body.action",
 });
-const wss_url = `wss://${websocketapi.attrApiId}.execute-api.${region}.amazonaws.com/${stage}`;
-const connection_url = `https://${websocketapi.attrApiId}.execute-api.${region}.amazonaws.com/${stage}`;
+const wss_url = `wss://${WebSocketapi.attrApiId}.execute-api.${region}.amazonaws.com/${stage}`;
+const connection_url = `https://${WebSocketapi.attrApiId}.execute-api.${region}.amazonaws.com/${stage}`;
 ```
 
 
@@ -341,11 +338,11 @@ const connection_url = `https://${websocketapi.attrApiId}.execute-api.${region}.
 
 ![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/ec1940d6-3629-453b-87c9-680e30c72dbb)
 
-대명사를 이용해 "그럼 그 도시에서 지하철 요금은 얼마야?"라고 문의하면 아래와 같이 서울 지하철 요금을 알려줍니다. 대화이력을 통해 서울의 지하철 요금을 알려주었지만, 2023년 10월에 지하철 요금이 150원이 올라서 1400원(교통카드 기준)이므로 최신 정보를 반영하고 못하고 있음을 알 수 있습니다.
+대명사를 이용해 "그럼 그 도시에서 지하철 요금은 얼마야?"라고 문의하면 아래와 같이 서울 지하철 요금을 알려줍니다. 대화 이력을 통해 서울의 지하철 요금을 알려주었지만, 2023년 10월에 지하철 요금이 150원이 올라서 1400원(교통카드 기준)이므로 최신 정보를 반영하고 못하고 있음을 알 수 있습니다.
 
 ![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/4ef5c736-7f6a-4653-865b-dbd13609da61)
 
-서울과 지하철이라는 단어를 넣지 않고 "그럼 환승도 가능해?"로 물었을때 아래와 같이 이전 대화이력(chat history)을 이용하여 서울 지하철의 환승에 대해 설명하여 줍니다.
+'서울'과 '지하철'이라는 단어를 넣지 않고 "그럼 환승도 가능해?"로 물었을때 아래와 같이 이전 대화 이력(chat history)을 이용하여 서울 지하철의 환승에 대해 설명하여 줍니다.
 
 ![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/8fadc6e1-503e-4fba-9a73-a48f04ca923a)
 
@@ -360,7 +357,7 @@ cdk destroy --all
 
 ## 결론
 
-AWS 서울 리전에서 Amazon Bedrock과 vector store를 이용하여 질문과 답변(Question/Answering)을 수행하는 chatbot을 구현하였습니다. Amazon Bedrock은 여러 종류의 대용량 언어 모델중에 한개를 선택하여 사용할 수 있습니다. 여기서는 Amazon Titan을 이용하여 RAG 동작을 구현하였고, 대용량 언어 모델의 환각(hallucination) 문제를 해결할 수 있었습니다. 또한 Chatbot 어플리케이션 개발을 위해 LangChain을 활용하였고, IaC(Infrastructure as Code)로 AWS CDK를 이용하였습니다. 대용량 언어 모델은 향후 다양한 어플리케이션에서 효과적으로 활용될것으로 기대됩니다. Amazon Bedrock을 이용하여 대용량 언어 모델을 개발하면 기존 AWS 인프라와 손쉽게 연동하고 다양한 어플리케이션을 효과적으로 개발할 수 있습니다.
+Amazon Bedrock이 정식으로 GA가 되면서 한국어 챗봇을 Anthropic Claude를 이용하여 쉽게 사용할 수 있게 되었습니다. 본 게시글에서는 Antrhohic의 Claude LLM용을 이용하여, 대표적인 LLM 어플리케이션 개발 프레임워크인 LangChain로 한국어 Chatbot을 만들었습니다. 이때 WebSocket을 이용하여 Client와 서버를 연결하여, Stream 형태로 답변을 표시할 수 있었습니다. Amazon Bedrock은 다양한 Foundation Model로 쉽게 생성형 AI로 어플리케이션을 개발할 수 있도록 해줍니다. 전체적인 인프라의 배포 및 관리를 위하여 AWS CDK를 사용하였고, 서버리스로 인프라 관리에 대한 부담없이 편리하게 한국어 Chatbot을 만들 수 있습니다. 대용량 언어 모델을 이용한 한국어 Chatbot은 기존 Role 방식의 Chatbot 대비 훨씬 개선된 대화능력을 보여줍니다. 향후 AWS Bedrock을 이용하여 다양한 어플리케이션을 쉽고 효과적으로 개발할 수 있을것으로 기대됩니다. 
 
 ## 실습 코드 및 도움이 되는 참조 블로그
 
