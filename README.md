@@ -1,6 +1,6 @@
 # Amazon Bedrock을 이용하여 Stream 기반의 한국어 Chatbot 구현하기 
 
-[2023년 9월 Amazon Bedrock의 상용](https://aws.amazon.com/ko/about-aws/whats-new/2023/09/amazon-bedrock-generally-available/)으로 [Amazon Titan](https://aws.amazon.com/ko/bedrock/titan/), [Anthropic Claude](https://aws.amazon.com/ko/bedrock/claude/)등의 다양한 LLM (Large Language Model)을 편리하게 사용할 수 있습니다. 특히 Anthropic의 Claude 모델은 한국어를 비교적 잘 지원하고 있습니다. Chatbot과 원활한 대화를 위해서는 사용자의 질문(Question)에 대한 전체 답변(Answer)을 얻을 때까지 기다리기 보다는 Stream 형태로 대화하듯이 보여주는것이 사용성에서 좋습니다. 이를 위해서 LLM에서 어플리케이션을 편리하게 만드는 [LangChain](https://docs.langchain.com/docs/)에서는 [streaming](https://blog.langchain.dev/streaming-support-in-langchain/)을 제공하고 있습니다. 본 게시글에서는 [Amazon Bedrock](https://aws.amazon.com/ko/bedrock/)을 사용하여 Stream을 지원하는 Chatbot을 만드는 방법을 설명합니다. 
+[2023년 9월 Amazon Bedrock의 상용](https://aws.amazon.com/ko/about-aws/whats-new/2023/09/amazon-bedrock-generally-available/)으로 [Amazon Titan](https://aws.amazon.com/ko/bedrock/titan/), [Anthropic Claude](https://aws.amazon.com/ko/bedrock/claude/)등의 다양한 LLM (Large Language Model)을 편리하게 사용할 수 있습니다. 특히 Anthropic의 Claude 모델은 한국어를 비교적 잘 지원하고 있습니다. Chatbot과 원활한 대화를 위해서는 사용자의 질문(Question)에 대한 전체 답변(Answer)을 얻을 때까지 기다리기 보다는 [Stream 형태](https://blog.langchain.dev/streaming-support-in-langchain/)로 대화하듯이 보여주는것이 사용성에서 좋습니다. 본 게시글에서는 [Amazon Bedrock](https://aws.amazon.com/ko/bedrock/)을 사용하여 Stream을 지원하는 Chatbot을 만드는 방법을 설명합니다. 
 
 서버리스(serverless) 아키텍처를 사용하면 인프라의 유지보수에 대한 부담없이 인프라를 효율적으로 관리할 수 있습니다. 또한 Stream형식으로 응답을 처리하려면 HTTP 방식보다는 하나의 세션을 통해 메시지를 교환하는 Websocket 방식이 유용합니다. 여기서는 서버리스인 [Amazon API Gateway를 이용해 Client와 Websocket을 연결](https://docs.aws.amazon.com/ko_kr/apigateway/latest/developerguide/apigateway-websocket-api-overview.html)하고 [AWS Lambda](https://aws.amazon.com/ko/pm/lambda/?nc1=h_ls)를 이용하여 세션을 관리합니다. 본 게시글에서 사용하는 Client는 Web으로 제공되므로, 채팅 이력은 로컬 디바이스가 아니라 서버에 저정되게 됩니다. Amazon의 DynamoDB는 Json형태로 채팅이력을 저장하는데 유용합니다. 여기서는 DynamoDB에 채팅이력을 저장하고 Client에 접속할때 사용하는 아이디로 조회합니다. 또한 채팅이력은 LLM에서 질의시에도 필요하므로 Lambda에서는 사용자 아이디 기반으로 DynamoDB에서 채팅이력을 로드하여 로컬 메모리에 저장하여 활용합니다. 
 
@@ -37,8 +37,7 @@ llm = Bedrock(
     model_kwargs=parameters)
 ```
 
-
-채팅이려까지 고려하기 위하여, ConversationChain을 이용하여 사용자의 질문에 대한 답변을 stream으로 얻습니다. 채팅이력은 ConversationBufferMemory을 이용하여 chat_memory로 설정한 후에 ConversationChain을 정의하여 사용합니다.
+본 게시글에서는 LLM에서 어플리케이션을 편리하게 만드는 프레임워크인 [LangChain](https://docs.langchain.com/docs/)을 사용하여 streaming을 처리합니다. 이때 채팅이려까지 고려하기 위하여, ConversationChain을 이용하여 사용자의 질문에 대한 답변을 stream으로 얻습니다. 채팅이력은 ConversationBufferMemory을 이용하여 chat_memory로 설정한 후에 ConversationChain을 정의하여 사용합니다.
 
 ```python
 from langchain.memory import ConversationBufferMemory
