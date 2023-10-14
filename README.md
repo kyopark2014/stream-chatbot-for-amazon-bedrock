@@ -1,6 +1,6 @@
 # Amazon Bedrock을 이용하여 Stream 기반의 한국어 Chatbot 구현하기 
 
-[2023년 9월 Amazon Bedrock의 상용](https://aws.amazon.com/ko/about-aws/whats-new/2023/09/amazon-bedrock-generally-available/)으로 [Amazon Titan](https://aws.amazon.com/ko/bedrock/titan/), [Anthropic Claude](https://aws.amazon.com/ko/bedrock/claude/)등의 다양한 LLM (Large Language Model)을 편리하게 사용할 수 있습니다. 특히 Anthropic의 Claude 모델은 한국어를 비교적 잘 지원하고 있습니다. Chatbot에서 원활한 대화를 위해서는 사용자의 질문(Question)에 대한 전체 답변을 줄때까지 기다리기 보다는 Stream 형태로 대화하듯이 보여주는것이 사용성을 개선하는 효과를 줍니다. 이를 위해서 LLM에서 어플리케이션을 편리하게 만드는 [LangChain](https://docs.langchain.com/docs/)에서는 [streaming](https://blog.langchain.dev/streaming-support-in-langchain/)을 제공하고 있습니다. 본 게시글에서는 [Amazon Bedrock](https://aws.amazon.com/ko/bedrock/)을 사용하여 Stream을 지원하는 Chatbot을 만드는 방법을 설명합니다. 
+[2023년 9월 Amazon Bedrock의 상용](https://aws.amazon.com/ko/about-aws/whats-new/2023/09/amazon-bedrock-generally-available/)으로 [Amazon Titan](https://aws.amazon.com/ko/bedrock/titan/), [Anthropic Claude](https://aws.amazon.com/ko/bedrock/claude/)등의 다양한 LLM (Large Language Model)을 편리하게 사용할 수 있습니다. 특히 Anthropic의 Claude 모델은 한국어를 비교적 잘 지원하고 있습니다. Chatbot에서 원활한 대화를 위해서는 사용자의 질문(Question)에 대한 전체 답변을 줄때까지 기다리기 보다는 Stream 형태로 대화하듯이 보여주는것이 사용성이 좋습니다. 이를 위해서 LLM에서 어플리케이션을 편리하게 만드는 [LangChain](https://docs.langchain.com/docs/)에서는 [streaming](https://blog.langchain.dev/streaming-support-in-langchain/)을 제공하고 있습니다. 본 게시글에서는 [Amazon Bedrock](https://aws.amazon.com/ko/bedrock/)을 사용하여 Stream을 지원하는 Chatbot을 만드는 방법을 설명합니다. 
 
 전체적인 Architecture는 아래와 같습니다.
 
