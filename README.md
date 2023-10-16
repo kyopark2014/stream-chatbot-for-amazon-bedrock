@@ -338,7 +338,8 @@ const connection_url = `https://${WebSocketapi.attrApiId}.execute-api.${region}.
 
 ![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/ec1940d6-3629-453b-87c9-680e30c72dbb)
 
-대명사를 이용해 "그럼 그 도시에서 지하철 요금은 얼마야?"라고 문의하면 아래와 같이 서울 지하철 요금을 알려줍니다. 대화 이력을 통해 서울의 지하철 요금을 알려주었지만, 2023년 10월에 지하철 요금이 150원이 올라서 1400원(교통카드 기준)이므로 최신 정보를 반영하고 못하고 있음을 알 수 있습니다.
+대명사를 이용해 "그럼 그 도시에서 지하철 요금은 얼마야?"로 문의하면 아래와 같이 서울 지하철 요금을 알려줍니다. 2023년 10월에 지하철 요금이 150원이 올라서 1400원(교통카드 기준)이므로 최신 정보를 반영하고 못하고 있지만, 대화 이력을 통해 서울의 지하철 요금을 확인할 수 있었습니다.
+
 
 ![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/4ef5c736-7f6a-4653-865b-dbd13609da61)
 
