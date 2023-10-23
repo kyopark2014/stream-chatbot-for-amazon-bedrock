@@ -85,31 +85,129 @@ llm = Bedrock(
 
 map = dict() # Conversation
 
-def get_prompt_template(query):
+def get_prompt_template(query, convType):
     # check korean
     pattern_hangul = re.compile('[\u3131-\u3163\uac00-\ud7a3]+')
     word_kor = pattern_hangul.search(str(query))
     print('word_kor: ', word_kor)
 
-    if word_kor:    
-        condense_template = """다음은 Human과 Assistant의 친근한 대화입니다. Assistant은 상황에 맞는 구체적인 세부 정보를 충분히 제공합니다. 아래 문맥(context)을 참조했음에도 답을 알 수 없다면, 솔직히 모른다고 말합니다.
+    if word_kor and word_kor != 'None':
+        if (convType=='qa' and rag_type=='opensearch') or (convType=='qa' and rag_type=='kendra') or (convType=='qa' and rag_type=='faiss' and isReady):  
+            # for RAG, context and question
+            prompt_template = """\n\nHuman: 다음은 Human과 Assistant의 친근한 대화입니다. Assistant은 상황에 맞는 구체적인 세부 정보를 충분히 제공합니다. Assistant는 모르는 질문을 받으면 솔직히 모른다고 말합니다. 여기서 Assistant의 이름은 서연입니다.
+        
+            <context>
+            {context}
+            </context>
 
-        Current conversation:
-        {history}
+            <question>            
+            {question}
+            </question>
+
+            Assistant:"""
+        elif convType == "translation":  # for translation, input
+            prompt_template = """\n\nHuman: 다음의 <translation>를 영어로 번역하세요. 머리말은 건너뛰고 본론으로 바로 들어가주세요. 또한 결과는 <result> tag를 붙여주세요.
+
+            <translation>
+            {input}
+            </translation>
+                        
+            Assistant:"""
+
+        elif convType == "sentiment":  # for sentiment, input
+            prompt_template = """\n\nHuman: 아래의 <example> review와 Extracted Topic and sentiment 인 <result>가 있습니다.
+            <example>
+            객실은 작지만 깨끗하고 편안합니다. 프론트 데스크는 정말 분주했고 체크인 줄도 길었지만, 직원들은 프로페셔널하고 매우 유쾌하게 각 사람을 응대했습니다. 우리는 다시 거기에 머물것입니다.
+            </example>
+            <result>
+            청소: 긍정적, 
+            서비스: 긍정적
+            </result>
+
+            아래의 <review>에 대해서 위의 <result> 예시처럼 Extracted Topic and sentiment 을 만들어 주세요..
+
+            <review>
+            {input}
+            </review>
+            Assistant: """
+
+        elif convType == "extraction":  # information extraction
+            prompt_template = """\n\nHuman: 다음 텍스트에서 이메일 주소를 정확하게 복사하여 한 줄에 하나씩 적어주세요. 입력 텍스트에 정확하게 쓰여있는 이메일 주소만 적어주세요. 텍스트에 이메일 주소가 없다면, "N/A"라고 적어주세요. 또한 결과는 <result> tag를 붙여주세요.
+
+            <text>
+            {input}
+            </text>
+
+            Assistant: """
+        
+        else: # for normal, history, input
+            prompt_template = """\n\nHuman: 다음은 Human과 Assistant의 친근한 대화입니다. Assistant은 상황에 맞는 구체적인 세부 정보를 충분히 제공합니다. 아래 문맥(context)을 참조했음에도 답을 알 수 없다면, 솔직히 모른다고 말합니다. 여기서 Assistant의 이름은 서연입니다.
+
+            Current conversation:
+            {history}
+
+            <question>            
+            {input}
+            </question>
             
-        Human: {input}
-            
-        Assistant:"""
+            Assistant:"""
     else:  # English
-        condense_template = """Using the following conversation, answer friendly for the newest question. If you don't know the answer, just say that you don't know, don't try to make up an answer. You will be acting as a thoughtful advisor.
+        if (convType=='qa' and rag_type=='opensearch') or (convType=='qa' and rag_type=='kendra') or (convType=='qa' and rag_type=='faiss' and isReady):  # for RAG
+            prompt_template = """\n\nHuman: Use the following pieces of context to provide a concise answer to the question at the end. If you don't know the answer, just say that you don't know, don't try to make up an answer.
+        
+            {context}
+                        
+            <question>
+            {question}
+            </question>
 
-        {history}
+            Assistant:"""
+        elif convType=="translation": 
+            prompt_template = """\n\nHuman: 다음의 <translation>를 한국어로 번역해줘. 머리말은 건너뛰고 본론으로 바로들어가줘. 또한 결과는 <result> tag를 붙여주세요.
             
-        Human: {input}
+            <translation>
+            {input}
+            </translation>
+                        
+            Assistant:"""
+        
+        elif convType == "sentiment":  # for sentiment, input
+            prompt_template = """\n\nHuman: Here is <example> review and extracted topics and sentiments as <result>.
 
-        Assistant:"""
+            <example>
+            The room was small but clean and comfortable. The front desk was really busy and the check-in line was long, but the staff were professional and very pleasant with each person they helped. We will stay there again.
+            </example>
 
-    return PromptTemplate.from_template(condense_template)
+            <result>
+            Cleanliness: Positive, 
+            Service: Positive
+            </result>
+
+            <review>
+            {input}
+            </review>
+            
+            Assistant:"""
+
+        elif convType == "extraction":  # for sentiment, input
+            prompt_template = """\n\nHuman: Please precisely copy any email addresses from the following text and then write them, one per line.  Only write an email address if it's precisely spelled out in the input text.  If there are no email addresses in the text, write "N/A".  Do not say anything else.  Put it in <result> tags.
+
+            {input}
+
+            Assistant:"""
+
+        else: # normal
+            prompt_template = """\n\nHuman: Using the following conversation, answer friendly for the newest question. If you don't know the answer, just say that you don't know, don't try to make up an answer. You will be acting as a thoughtful advisor.
+
+            {history}
+            
+            Human: {input}
+
+            Assistant:"""
+
+            #claude_prompt = PromptTemplate.from_template("""The following is a friendly conversation between a human and an AI. The AI is talkative and provides lots of specific details from its context. If the AI does not know the answer to a question, it truthfully says it does not know.
+    
+    return PromptTemplate.from_template(prompt_template)
 
 # load documents from s3 for pdf and txt
 def load_document(file_type, s3_file_name):
@@ -274,6 +372,8 @@ def getResponse(connectionId, jsonBody):
     # print('type: ', type)
     body = jsonBody['body']
     # print('body: ', body)
+    convType = jsonBody['convType']  # conversation type
+    # print('convType: ', convType)
 
     global modelId, llm, parameters, conversation, conversationMode, map, chat_memory
 
@@ -333,16 +433,25 @@ def getResponse(connectionId, jsonBody):
                 msg  = "The chat memory was intialized in this session."
             else:            
                 if conversationMode == 'true':
-                    conversation.prompt = get_prompt_template(text)
-                    stream = conversation.predict(input=text)
-                    #print('stream: ', stream)
-                        
-                    msg = readStreamMsg(connectionId, requestId, stream)
-                        
-                    # extract chat history for debug
-                    chats = chat_memory.load_memory_variables({})
-                    chat_history_all = chats['history']
-                    print('chat_history_all: ', chat_history_all)
+                    if convType == 'qa' or convType == 'normal':
+                        conversation.prompt = get_prompt_template(text, convType)
+                        stream = conversation.predict(input=text)
+                        #print('stream: ', stream)
+                            
+                        msg = readStreamMsg(connectionId, requestId, stream)
+                            
+                        # extract chat history for debug
+                        chats = chat_memory.load_memory_variables({})
+                        chat_history_all = chats['history']
+                        print('chat_history_all: ', chat_history_all)
+                    elif convType == 'none':
+                        msg = llm(HUMAN_PROMPT+text+AI_PROMPT)
+                    else: # no need history, translation, sentiment, extraction
+                        PROMPT = get_prompt_template(text, convType)
+                        #print('PROMPT: ', PROMPT)
+                        stream = llm(PROMPT.format(input=text))
+                        msg = readStreamMsg(connectionId, requestId, stream)
+
                 else:
                     msg = llm(HUMAN_PROMPT+text+AI_PROMPT)
             #print('msg: ', msg)
