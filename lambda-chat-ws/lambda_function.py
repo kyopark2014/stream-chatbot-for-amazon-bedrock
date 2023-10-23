@@ -93,7 +93,7 @@ def get_prompt_template(query, convType):
 
     if word_kor and word_kor != 'None':
         if convType=='qa':  
-            prompt_template = """\n\nHuman: Answer only if it is very confident. 
+            prompt_template = """\n\nHuman: Answer only if it is very confident. If you don't confident, say "I don't know."
 
             Current conversation:
             {history}
