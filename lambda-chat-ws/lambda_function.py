@@ -93,7 +93,7 @@ def get_prompt_template(query, convType):
 
     if word_kor and word_kor != 'None':
         if convType=='qa':  
-            prompt_template = """\n\nHuman: Answer only if it is very confident. If you don't confident, say "I don't know."
+            prompt_template = """\n\nHuman: 확실한 경우에만 답변하세요. 불명확할때에는 모른다고 하세요."
 
             Current conversation:
             {history}
@@ -150,7 +150,7 @@ def get_prompt_template(query, convType):
             Assistant:"""
     else:  # English
         if convType=='qa':  
-            prompt_template = """\n\nHuman: Use the following pieces of context to provide a concise answer to the question at the end. If you don't know the answer, just say that you don't know, don't try to make up an answer.
+            prompt_template = """\n\nHuman: Answer only if it is very confident. If you don't confident, say "I don't know.".
         
             {context}
                         
