@@ -149,7 +149,7 @@ def get_prompt_template(query, convType):
             
             Assistant:"""
     else:  # English
-        if (convType=='qa' and rag_type=='opensearch') or (convType=='qa' and rag_type=='kendra') or (convType=='qa' and rag_type=='faiss' and isReady):  # for RAG
+        if convType=='qa':  
             prompt_template = """\n\nHuman: Use the following pieces of context to provide a concise answer to the question at the end. If you don't know the answer, just say that you don't know, don't try to make up an answer.
         
             {context}
@@ -194,7 +194,7 @@ def get_prompt_template(query, convType):
             Assistant:"""
 
         else: # normal
-            prompt_template = """\n\nHuman: Using the following conversation, answer friendly for the newest question. If you don't know the answer, just say that you don't know, don't try to make up an answer. You will be acting as a thoughtful advisor.
+            prompt_template = """\n\nHuman: Using the following conversation, answer friendly for the newest question. You will be acting as a thoughtful advisor. Also your name is Seyeon.
 
             {history}
             
