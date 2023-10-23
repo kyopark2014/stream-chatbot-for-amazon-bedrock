@@ -93,17 +93,14 @@ def get_prompt_template(query, convType):
 
     if word_kor and word_kor != 'None':
         if convType=='qa':  
-            # for RAG, context and question
-            prompt_template = """\n\nHuman: 다음은 Human과 Assistant의 친근한 대화입니다. Assistant은 상황에 맞는 구체적인 세부 정보를 충분히 제공합니다. Assistant는 모르는 질문을 받으면 솔직히 모른다고 말합니다. 여기서 Assistant의 이름은 서연입니다.
-        
-            <context>
-            {context}
-            </context>
+            prompt_template = """\n\nHuman: Answer only if it is very confident. 
 
-            <question>            
-            {question}
-            </question>
+            Current conversation:
+            {history}
 
+            <thinking>            
+            {input}
+            </thinking>            
             Assistant:"""
         elif convType == "translation":  # for translation, input
             prompt_template = """\n\nHuman: 다음의 <translation>를 영어로 번역하세요. 머리말은 건너뛰고 본론으로 바로 들어가주세요. 또한 결과는 <result> tag를 붙여주세요.
