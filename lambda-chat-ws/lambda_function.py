@@ -431,7 +431,8 @@ def getResponse(connectionId, jsonBody):
                 map[userId] = chat_memory
                 print('initiate the chat memory!')
                 msg  = "The chat memory was intialized in this session."
-            else:            
+            else:       
+                print('convType: ', convType)     
                 if conversationMode == 'true':
                     if convType == 'qa' or convType == 'normal':
                         conversation.prompt = get_prompt_template(text, convType)
@@ -524,6 +525,8 @@ def lambda_handler(event, context):
                     msg = getResponse(connectionId, jsonBody)
                 except Exception as ex:
                     err_msg = traceback.format_exc()
+                    print('err_msg: ', err_msg)
+
                     result = {
                         'request_id': requestId,
                         'msg': "The request was failed by the system: "+err_msg
