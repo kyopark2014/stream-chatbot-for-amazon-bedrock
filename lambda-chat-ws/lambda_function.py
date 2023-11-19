@@ -423,9 +423,9 @@ def getResponse(connectionId, jsonBody):
                 conversationMode = 'false'
                 msg  = "Conversation mode is disabled"
             elif text == 'clearMemory':
-                chat_memory = ""
-                chat_memory = ConversationBufferMemory(human_prefix='Human', ai_prefix='Assistant')
-                map[userId] = chat_memory
+                memory_chat.clear()                
+                map_chat[userId] = memory_chat
+                conversation = ConversationChain(llm=llm, verbose=False, memory=memory_chat)
                 print('initiate the chat memory!')
                 msg  = "The chat memory was intialized in this session."
             else:       
