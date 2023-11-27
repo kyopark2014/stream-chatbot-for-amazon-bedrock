@@ -78,7 +78,7 @@ export class CdkStreamChatbotStack extends cdk.Stack {
 
     // copy web application files into s3 bucket
     new s3Deploy.BucketDeployment(this, `upload-HTML-for-${projectName}`, {
-      sources: [s3Deploy.Source.asset("../html")],
+      sources: [s3Deploy.Source.asset("../html/")],
       destinationBucket: s3Bucket,
     });
 
