@@ -46,7 +46,7 @@ body {
 }
 
 .settings-tray--right i:hover {
-  color: #74b9ff;
+  color: #037bf3;
   cursor: pointer;
 }
 
@@ -63,7 +63,7 @@ body {
 }
 
 .settings-send i:hover {
-  color: #74b9ff;
+  color: #037bf3;
   cursor: pointer;
 }
 
@@ -122,7 +122,7 @@ input:focus {
 }
 
 .friend-drawer--onhover:hover {
-  background: #74b9ff;
+  background: #037bf3;
   cursor: pointer;
 }
 
@@ -166,7 +166,7 @@ hr {
 
 .chat-bubble--right:after {
   right: 0;
-  border-left-color: #74b9ff;
+  border-left-color: #037bf3;
   border-right: 0;
   margin-right: -20px;
 }
@@ -204,14 +204,14 @@ hr {
 
 .receive-bubble--right:after {
   right: 0;
-  border-left-color: #74b9ff;
+  border-left-color: #037bf3;
   border-right: 0;
   margin-right: -20px;
 }
 
 .send-bubble {
   padding: 10px 14px;
-  background: #74b9ff;
+  background: #037bf3;
   color: #fff;
   margin: 10px 30px;
   border-radius: 9px;
@@ -240,7 +240,7 @@ hr {
 
 .send-bubble--right:after {
   right: 0;
-  border-left-color: #74b9ff;
+  border-left-color: #037bf3;
   border-right: 0;
   margin-right: -20px;
 }
@@ -256,7 +256,7 @@ hr {
 }
 
 .offset-md-9 .chat-bubble {
-  background: #74b9ff;
+  background: #037bf3;
   color: #fff;
 }
 
@@ -325,7 +325,7 @@ hr {
 
 .chat-receiver--right:after {
   right: 0;
-  border-left-color: #74b9ff;
+  border-left-color: #037bf3;
   border-right: 0;
   margin-right: -20px;
 }
@@ -630,7 +630,7 @@ hr {
   margin-right: 30px;
   margin-bottom: 0.5em;
   padding: 15px 14px;
-  background: #74b9ff;
+  background: #037bf3;
   color: #fff;
   border-radius: 9px;
   position: relative;
@@ -650,7 +650,7 @@ hr {
 
 .chat-sender--right:after {
   right: 0;
-  border-left-color: #74b9ff;
+  border-left-color: #037bf3;
   border-right: 0;
   margin-right: -20px;
 }
@@ -677,7 +677,7 @@ hr {
   margin-right: 30px;
   margin-bottom: 0.5em;
   padding: 15px 14px;
-  background: #74b9ff;
+  background: #037bf3;
   color: #fff;
   border-radius: 9px;
   position: relative;
@@ -705,7 +705,7 @@ hr {
   margin-right: 30px;
   margin-bottom: 0.5em;
   padding: 15px 14px;
-  background: #74b9ff;
+  background: #037bf3;
   color: #fff;
   border-radius: 9px;
   position: relative;
@@ -733,7 +733,7 @@ hr {
   margin-right: 30px;
   margin-bottom: 0.5em;
   padding: 15px 14px;
-  background: #74b9ff;
+  background: #037bf3;
   color: #fff;
   border-radius: 9px;
   position: relative;
@@ -761,7 +761,7 @@ hr {
   margin-right: 30px;
   margin-bottom: 0.5em;
   padding: 15px 14px;
-  background: #74b9ff;
+  background: #037bf3;
   color: #fff;
   border-radius: 9px;
   position: relative;
@@ -789,7 +789,7 @@ hr {
   margin-right: 30px;
   margin-bottom: 0.5em;
   padding: 15px 14px;
-  background: #74b9ff;
+  background: #037bf3;
   color: #fff;
   border-radius: 9px;
   position: relative;
@@ -817,7 +817,7 @@ hr {
   margin-right: 30px;
   margin-bottom: 0.5em;
   padding: 15px 14px;
-  background: #74b9ff;
+  background: #037bf3;
   color: #fff;
   border-radius: 9px;
   position: relative;
@@ -845,7 +845,7 @@ hr {
   margin-right: 30px;
   margin-bottom: 0.5em;
   padding: 15px 14px;
-  background: #74b9ff;
+  background: #037bf3;
   color: #fff;
   border-radius: 9px;
   position: relative;
@@ -873,7 +873,7 @@ hr {
   margin-right: 30px;
   margin-bottom: 0.5em;
   padding: 15px 14px;
-  background: #74b9ff;
+  background: #037bf3;
   color: #fff;
   border-radius: 9px;
   position: relative;
@@ -901,7 +901,7 @@ hr {
   margin-right: 30px;
   margin-bottom: 0.5em;
   padding: 15px 14px;
-  background: #74b9ff;
+  background: #037bf3;
   color: #fff;
   border-radius: 9px;
   position: relative;
@@ -924,4 +924,11 @@ hr {
 
 .notification-text {
   text-align: center;
+}
+
+.istyping {
+  margin-left: 15px;
+  position: relative; 
+  background: white;
+  font-size: 1.0em; 
 }
