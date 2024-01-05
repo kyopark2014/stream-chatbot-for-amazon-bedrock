@@ -64,27 +64,15 @@ aws sts get-caller-identity --query Account --output text
 cdk bootstrap aws://account-id/ap-northeast-2
 ```
 
-8) 인프라를 설치합니다.
+8) 아래 명령어로 인프라를 설치합니다.
 
 ```java
 cdk deploy --all
 ```
 
-9) 아래와 같이 webSocketUrl을 확인합니다. 여기서는 "wss://etl2hxx4la.execute-api.ap-northeast-1.amazonaws.com/dev" 입니다.
+인프라가 설치가 되면 아래와 같은 Output을 확인할 수 있습니다. 
 
-![noname](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/a80f5e34-37e2-4249-8d42-0ddb6255ed15)
+![noname](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/5c876093-3faa-4faf-a7d2-ed9659a75473)
 
-
-11) 아래와 같이 "UpdateCommendforstreamchatbotsimple"에 있는 명령어를 확인합니다. 여기서는 "aws s3 cp ../html/chat.js s3://cdkstreamchatbotstack-storagestreamchatbote10ee90-sh19etaljvog"입니다.
-
-![noname](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/dafbcc16-2520-4541-ae41-9b43d681e71a)
-
-아래와 같이 명령어를 입력합니다. 
-
-![noname](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/73aea751-c148-460c-8a54-e15589f84833)
-
-12) 복사가 완료되면 아래와 같이 WebUrl을 이용하여 브라우저로 접속합니다.
-
-![noname](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/db6f9d02-91d9-4676-835e-c8d9f0a046ab)
-
+9) Output의 WebUrlforstreamchatbot의 URL로 접속합니다. 
 
