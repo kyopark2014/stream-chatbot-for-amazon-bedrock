@@ -16,7 +16,7 @@ const region = process.env.CDK_DEFAULT_REGION;
 const debug = false;
 const stage = 'dev';
 const s3_prefix = 'docs';
-const model_id = "anthropic.claude-v2"; // amazon.titan-tg1-large, amazon.titan-tg1-xlarge, anthropic.claude-v1, anthropic.claude-v2
+const model_id = "anthropic.claude-instant-v1"; // amazon.titan-tg1-large, amazon.titan-tg1-xlarge, anthropic.claude-v1, anthropic.claude-v2, anthropic.claude-instant-v1
 const projectName = `stream-chatbot`; 
 
 const bucketName = `storage-for-${projectName}-${region}`; 
@@ -214,11 +214,6 @@ export class CdkStreamChatbotStack extends cdk.Stack {
     new cdk.CfnOutput(this, `WebUrl-for-${projectName}`, {
       value: 'https://'+distribution.domainName+'/index.html',      
       description: 'The web url of request for chat',
-    });
-
-    new cdk.CfnOutput(this, `UpdateCommend-for-${projectName}`, {
-      value: 'aws s3 cp ../html/chat.js '+'s3://'+s3Bucket.bucketName,
-      description: 'The url of web file upload',
     });
 
     // Lambda - Upload
