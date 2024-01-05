@@ -342,6 +342,15 @@ def getAllowTime():
 
     return timeStr
 
+def isTyping(connectionId, requestId):    
+    msg_proceeding = {
+        'request_id': requestId,
+        'msg': 'Proceeding...',
+        'status': 'istyping'
+    }
+    #print('result: ', json.dumps(result))
+    sendMessage(connectionId, msg_proceeding)
+
 def readStreamMsg(connectionId, requestId, stream):
     msg = ""
     if stream:
@@ -432,6 +441,7 @@ def getResponse(connectionId, jsonBody):
                 print('convType: ', convType)     
                 if conversationMode == 'true':
                     if convType == 'qa' or convType == 'normal':
+                        isTyping(connectionId, requestId)
                         conversation.prompt = get_prompt_template(text, convType)
                         stream = conversation.predict(input=text)
                         #print('stream: ', stream)
@@ -445,6 +455,7 @@ def getResponse(connectionId, jsonBody):
                     elif convType == 'none':
                         msg = llm(HUMAN_PROMPT+text+AI_PROMPT)
                     else: # no need history, translation, sentiment, extraction
+                        isTyping(connectionId, requestId)
                         PROMPT = get_prompt_template(text, convType)
                         #print('PROMPT: ', PROMPT)
                         stream = llm(PROMPT.format(input=text))

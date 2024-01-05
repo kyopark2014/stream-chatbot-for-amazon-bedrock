@@ -1,6 +1,17 @@
 const protocol = 'WEBSOCKET'; // WEBSOCKET or HTTP
-const endpoint = 'wss://43qpsastqc.execute-api.ap-northeast-2.amazonaws.com/dev';
 const langstate = 'korean'; // korean or english
+
+// earn endpoint 
+let endpoint = localStorage.getItem('wss_url');
+if(endpoint=="") {
+    console.log('provisioning is required!');
+}
+console.log('endpoint: ', endpoint);
+
+console.log('feedback...');
+const feedback = document.getElementById('feedback');
+feedback.style.display = 'none'; 
+
 let webSocket
 let isConnected = false;
 if(protocol == 'WEBSOCKET') {
