@@ -92,15 +92,17 @@ def get_prompt_template(query, convType):
     print('word_kor: ', word_kor)
 
     if word_kor and word_kor != 'None':
-        if convType=='qa':  
-            prompt_template = """\n\nHuman: 확실한 경우에만 답변하세요. 불명확할때에는 모른다고 하세요."
+        if convType == "normal": # for General Conversation
+            prompt_template = """\n\nHuman: 다음의 <history>는 Human과 Assistant의 친근한 이전 대화입니다. Assistant은 상황에 맞는 구체적인 세부 정보를 충분히 제공합니다. Assistant의 이름은 서연이고, 모르는 질문을 받으면 솔직히 모른다고 말합니다.
 
-            Current conversation:
+            <history>
             {history}
+            </history>            
 
-            <thinking>            
+            <question>            
             {input}
-            </thinking>            
+            </question>
+            
             Assistant:"""
         elif convType == "translation":  # for translation, input
             prompt_template = """\n\nHuman: 다음의 <translation>를 영어로 번역하세요. 머리말은 건너뛰고 본론으로 바로 들어가주세요. 또한 결과는 <result> tag를 붙여주세요.
@@ -110,6 +112,15 @@ def get_prompt_template(query, convType):
             </translation>
                         
             Assistant:"""
+        
+        elif convType == "grammar":  # Checking Grammatical Errors
+            prompt_template = """\n\nHuman: 다음의 <article>에서 문장의 오류를 찾아서 설명하고, 오류가 수정된 문장을 답변 마지막에 추가하여 주세요.
+
+            <article>
+            {input}
+            </article>
+            
+            Assistant: """
 
         elif convType == "sentiment":  # for sentiment, input
             prompt_template = """\n\nHuman: 아래의 <example> review와 Extracted Topic and sentiment 인 <result>가 있습니다.
@@ -136,6 +147,55 @@ def get_prompt_template(query, convType):
             </text>
 
             Assistant: """
+            
+        elif convType == "pii":  # removing PII(personally identifiable information) containing name, phone number, address
+            prompt_template = """\n\nHuman: 아래의 <text>에서 개인식별정보(PII)를 모두 제거하여 외부 계약자와 안전하게 공유할 수 있도록 합니다. 이름, 전화번호, 주소, 이메일을 XXX로 대체합니다. 또한 결과는 <result> tag를 붙여주세요.
+            
+            <text>
+            {input}
+            </text>
+        
+            Assistant:"""
+                
+        elif convType == "step-by-step":  # compelex question 
+            prompt_template = """\n\nHuman: 다음은 Human과 Assistant의 친근한 대화입니다. Assistant은 상황에 맞는 구체적인 세부 정보를 충분히 제공합니다. 아래 문맥(context)을 참조했음에도 답을 알 수 없다면, 솔직히 모른다고 말합니다. 여기서 Assistant의 이름은 서연입니다.
+
+            {input}
+
+            Assistant: 단계별로 생각할까요?
+
+            Human: 예, 그렇게하세요.
+            
+            Assistant:"""
+        
+        elif convType == "timestamp-extraction":  
+            prompt_template = """\n\nHuman: 아래의 <text>는 시간을 포함한 텍스트입니다. 친절한 AI Assistant로서 시간을 추출하여 아래를 참조하여 <example>과 같이 정리해주세요.
+            
+            - 년도를 추출해서 <year>/<year>로 넣을것 
+            - 월을 추출해서 <month>/<month>로 넣을것
+            - 일을 추출해서 <day>/<day>로 넣을것
+            - 시간을 추출해서 24H으로 정리해서 <hour>/<hour>에 넣을것
+            - 분을 추출해서 <minute>/<minute>로 넣을것
+
+            이때의 예제는 아래와 같습니다.
+            <example>
+            2022년 11월 3일 18시 26분
+            </example>
+            <result>
+                <year>2022</year>
+                <month>11</month>
+                <day>03</day>
+                <hour>18</hour>
+                <minute>26</minute>
+            </result>
+
+            결과에 개행문자인 "\n"과 글자 수와 같은 부가정보는 절대 포함하지 마세요.
+
+            <text>
+            {input}
+            </text>
+
+            Assistant:"""  
         
         else: # for normal, history, input
             prompt_template = """\n\nHuman: 다음은 Human과 Assistant의 친근한 대화입니다. Assistant은 상황에 맞는 구체적인 세부 정보를 충분히 제공합니다. 여기서 Assistant의 이름은 서연입니다.
@@ -149,24 +209,38 @@ def get_prompt_template(query, convType):
             
             Assistant:"""
     else:  # English
-        if convType=='qa':  
-            prompt_template = """\n\nHuman: Answer only if it is very confident. If you don't confident, say "I don't know.".
-        
-            {context}
-                        
-            <question>
-            {question}
+        if convType == "normal": # for General Conversation
+            prompt_template = """\n\nHuman: Using the following conversation, answer friendly for the newest question. If you don't know the answer, just say that you don't know, don't try to make up an answer. You will be acting as a thoughtful advisor.
+
+            <history>
+            {history}
+            </history>
+            
+            <question>            
+            {input}
             </question>
 
             Assistant:"""
-        elif convType=="translation": 
-            prompt_template = """\n\nHuman: 다음의 <translation>를 한국어로 번역해줘. 머리말은 건너뛰고 본론으로 바로들어가줘. 또한 결과는 <result> tag를 붙여주세요.
             
-            <translation>
+        elif convType=="translation": 
+            prompt_template = """\n\nHuman: Here is an article, contained in <article> tags. Translate the article to Korean. Put it in <result> tags.
+            
+            <article>
             {input}
-            </translation>
+            </article>
                         
             Assistant:"""
+        
+        elif convType == "grammar":  # Checking Grammatical Errors
+            prompt_template = """\n\nHuman: Here is an article, contained in <article> tags:
+
+            <article>
+            {input}
+            </article>
+
+            Please identify any grammatical errors in the article. Also, add the fixed article at the end of answer.
+            
+            Assistant: """
         
         elif convType == "sentiment":  # for sentiment, input
             prompt_template = """\n\nHuman: Here is <example> review and extracted topics and sentiments as <result>.
@@ -185,11 +259,34 @@ def get_prompt_template(query, convType):
             </review>
             
             Assistant:"""
-
+        
         elif convType == "extraction":  # for sentiment, input
             prompt_template = """\n\nHuman: Please precisely copy any email addresses from the following text and then write them, one per line.  Only write an email address if it's precisely spelled out in the input text.  If there are no email addresses in the text, write "N/A".  Do not say anything else.  Put it in <result> tags.
 
             {input}
+
+            Assistant:"""
+
+        elif convType == "pii":  # removing PII(personally identifiable information) containing name, phone number, address
+            prompt_template = """\n\nHuman: We want to de-identify some text by removing all personally identifiable information from this text so that it can be shared safely with external contractors.
+            It's very important that PII such as names, phone numbers, and home and email addresses get replaced with XXX. Put it in <result> tags.
+
+            Here is the text, inside <text></text> XML tags.
+
+            <text>
+            {input}
+            </text>
+
+            Assistant:"""
+                
+        elif convType == "step-by-step":  # compelex question 
+            prompt_template = """\n\nHuman: Using the following conversation, answer friendly for the newest question. If you don't know the answer, just say that you don't know, don't try to make up an answer. You will be acting as a thoughtful advisor.
+            
+            {input}
+
+            Assistant: Can I think step by step?
+
+            Human: Yes, please do.
 
             Assistant:"""
 
@@ -201,8 +298,6 @@ def get_prompt_template(query, convType):
             Human: {input}
 
             Assistant:"""
-
-            #claude_prompt = PromptTemplate.from_template("""The following is a friendly conversation between a human and an AI. The AI is talkative and provides lots of specific details from its context. If the AI does not know the answer to a question, it truthfully says it does not know.
     
     return PromptTemplate.from_template(prompt_template)
 
