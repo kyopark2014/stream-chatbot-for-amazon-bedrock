@@ -75,10 +75,6 @@ cdk deploy --all
 ![noname](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/a80f5e34-37e2-4249-8d42-0ddb6255ed15)
 
 
-10) 아래와 같이 "/html/chat.js"파일을 열어서, endpoint를 업데이트합니다.
-
-![noname](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/99e03119-e8f8-4961-ab13-6f9bb149acbe)
-
 11) 아래와 같이 "UpdateCommendforstreamchatbotsimple"에 있는 명령어를 확인합니다. 여기서는 "aws s3 cp ../html/chat.js s3://cdkstreamchatbotstack-storagestreamchatbote10ee90-sh19etaljvog"입니다.
 
 ![noname](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/dafbcc16-2520-4541-ae41-9b43d681e71a)
