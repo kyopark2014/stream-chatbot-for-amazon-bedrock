@@ -18,6 +18,36 @@ if(protocol == 'WEBSOCKET') {
     webSocket = connect(endpoint, 'initial');
 }
 
+HashMap = function() {
+    this.map = new Array();
+};
+
+HashMap.prototype = {
+    put: function(key, value) {
+        this.map[key] = value;
+    },
+    get: function(key) {
+        return this.map[key];
+    },
+    size: function() {
+        var keys = new Array();
+        for(i in this.map) {
+            keys.push(i);
+        }
+        return keys.length;
+    },
+    remove: function(key) {
+        delete this.map[key];
+    },
+    getKeys: function() {
+        var keys = new Array();
+        for(i in this.map) {
+            keys.push(i);
+        }
+        return keys;
+    }
+};
+
 let undelivered = new HashMap();
 let retry_count = 0;
 function sendMessage(message) {
@@ -101,13 +131,6 @@ function connect(endpoint, type) {
         else {
             response = JSON.parse(event.data)
 
-        /*    if(response.request_id) {
-                console.log('received message: ', response.msg);
-                addReceivedMessage(response.request_id, response.msg);
-            }
-            else {
-                console.log('system message: ', event.data);
-            } */
             if(response.status == 'completed') {          
                 feedback.style.display = 'none';          
                 console.log('received message: ', response.msg);                  
@@ -160,36 +183,6 @@ const title = document.querySelector('#title');
 const sendBtn = document.querySelector('#sendBtn');
 const message = document.querySelector('#chatInput')
 const chatPanel = document.querySelector('#chatPanel');
-
-HashMap = function() {
-    this.map = new Array();
-};
-
-HashMap.prototype = {
-    put: function(key, value) {
-        this.map[key] = value;
-    },
-    get: function(key) {
-        return this.map[key];
-    },
-    size: function() {
-        var keys = new Array();
-        for(i in this.map) {
-            keys.push(i);
-        }
-        return keys.length;
-    },
-    remove: function(key) {
-        delete this.map[key];
-    },
-    getKeys: function() {
-        var keys = new Array();
-        for(i in this.map) {
-            keys.push(i);
-        }
-        return keys;
-    }
-};
 
 let isResponsed = new HashMap();
 let indexList = new HashMap();
