@@ -72,13 +72,37 @@ function connect(endpoint, type) {
         else {
             response = JSON.parse(event.data)
 
-            if(response.request_id) {
+        /*    if(response.request_id) {
                 console.log('received message: ', response.msg);
                 addReceivedMessage(response.request_id, response.msg);
             }
             else {
                 console.log('system message: ', event.data);
+            } */
+            if(response.status == 'completed') {          
+                feedback.style.display = 'none';          
+                console.log('received message: ', response.msg);                  
+                addReceivedMessage(response.request_id, response.msg);  
+            }                
+            else if(response.status == 'istyping') {
+                feedback.style.display = 'inline';
+                // feedback.innerHTML = '<i>typing a message...</i>'; 
             }
+            else if(response.status == 'proceeding') {
+                feedback.style.display = 'none';
+                addReceivedMessage(response.request_id, response.msg);  
+            }                
+            else if(response.status == 'debug') {
+                feedback.style.display = 'none';
+                console.log('debug: ', response.msg);
+                // addNotifyMessage(response.msg);
+                addReceivedMessage(response.request_id, response.msg);  
+            }          
+            else if(response.status == 'error') {
+                feedback.style.display = 'none';
+                console.log('error: ', response.msg);
+                addNotifyMessage(response.msg);
+            }   
         }        
     };
 

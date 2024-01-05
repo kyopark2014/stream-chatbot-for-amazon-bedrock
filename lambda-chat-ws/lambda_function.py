@@ -360,7 +360,8 @@ def readStreamMsg(connectionId, requestId, stream):
 
             result = {
                 'request_id': requestId,
-                'msg': msg
+                'msg': msg,
+                'status': 'proceeding'
             }
             #print('result: ', json.dumps(result))
             sendMessage(connectionId, result)
@@ -432,9 +433,9 @@ def getResponse(connectionId, jsonBody):
                 conversationMode = 'false'
                 msg  = "Conversation mode is disabled"
             elif text == 'clearMemory':
-                memory_chat.clear()                
-                map_chat[userId] = memory_chat
-                conversation = ConversationChain(llm=llm, verbose=False, memory=memory_chat)
+                chat_memory.clear()                
+                map[userId] = chat_memory
+                conversation = ConversationChain(llm=llm, verbose=False, memory=chat_memory)
                 print('initiate the chat memory!')
                 msg  = "The chat memory was intialized in this session."
             else:       
@@ -537,14 +538,16 @@ def lambda_handler(event, context):
 
                     result = {
                         'request_id': requestId,
-                        'msg': "The request was failed by the system: "+err_msg
+                        'msg': "The request was failed by the system: "+err_msg,
+                        'status': 'debug'
                     }
                     sendMessage(connectionId, result)
                     raise Exception ("Not able to send a message")
                                     
                 result = {
                     'request_id': requestId,
-                    'msg': msg
+                    'msg': msg,
+                    'status': 'completed'
                 }
                 #print('result: ', json.dumps(result))
                 sendMessage(connectionId, result)
