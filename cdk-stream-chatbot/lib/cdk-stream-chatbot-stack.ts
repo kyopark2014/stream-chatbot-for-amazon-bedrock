@@ -82,6 +82,11 @@ export class CdkStreamChatbotStack extends cdk.Stack {
       destinationBucket: s3Bucket,
     });
 
+    new cdk.CfnOutput(this, 'HtmlUpdateCommend', {
+      value: 'aws s3 cp ../html/ ' + 's3://' + s3Bucket.bucketName + '/ --recursive',
+      description: 'copy commend for web pages',
+    });
+
     // cloudfront
     const distribution = new cloudFront.Distribution(this, `cloudfront-for-${projectName}`, {
       defaultBehavior: {
