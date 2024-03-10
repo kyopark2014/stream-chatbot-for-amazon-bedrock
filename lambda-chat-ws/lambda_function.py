@@ -497,7 +497,7 @@ def extract_information(chat, text):
     
     return msg
 
-def extract_pii(chat, text):
+def remove_pii(chat, text):
     if isKorean(text)==True:
         system = (
             """아래의 <text>에서 개인식별정보(PII)를 모두 제거하여 외부 계약자와 안전하게 공유할 수 있도록 합니다. 이름, 전화번호, 주소, 이메일을 XXX로 대체합니다. 또한 결과는 <result> tag를 붙여주세요."""
