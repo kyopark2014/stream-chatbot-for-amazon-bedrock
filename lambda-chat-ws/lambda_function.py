@@ -293,7 +293,7 @@ def readStreamMsg(connectionId, requestId, stream):
             sendMessage(connectionId, result)
     # print('msg: ', msg)
     return msg
-
+    
 def sendMessage(id, body):
     try:
         client.post_to_connection(
@@ -304,6 +304,24 @@ def sendMessage(id, body):
         err_msg = traceback.format_exc()
         print('err_msg: ', err_msg)
         raise Exception ("Not able to send a message")
+
+def sendResultMessage(connectionId, requestId, msg):    
+    result = {
+        'request_id': requestId,
+        'msg': msg,
+        'status': 'completed'
+    }
+    #print('debug: ', json.dumps(debugMsg))
+    sendMessage(connectionId, result)
+        
+def sendErrorMessage(connectionId, requestId, msg):
+    errorMsg = {
+        'request_id': requestId,
+        'msg': msg,
+        'status': 'error'
+    }
+    print('error: ', json.dumps(errorMsg))
+    sendMessage(connectionId, errorMsg)    
 
 def load_chat_history(userId, allowTime):
     dynamodb_client = boto3.client('dynamodb')
@@ -585,15 +603,6 @@ def extract_timestamp(chat, text):
         raise Exception ("Not able to request to LLM")
     
     return msg
-    
-def sendErrorMessage(connectionId, requestId, msg):
-    errorMsg = {
-        'request_id': requestId,
-        'msg': msg,
-        'status': 'error'
-    }
-    print('error: ', json.dumps(errorMsg))
-    sendMessage(connectionId, errorMsg)
 
 def getResponse(connectionId, jsonBody):
     print('jsonBody: ', jsonBody)
@@ -777,7 +786,7 @@ def lambda_handler(event, context):
                     msg = getResponse(connectionId, jsonBody)
                     # print('msg: ', msg)
                     
-                    sendMessage(connectionId, msg)
+                    sendResultMessage(connectionId, requestId, msg)  
                                         
                 except Exception:
                     err_msg = traceback.format_exc()
