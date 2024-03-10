@@ -489,7 +489,7 @@ def extract_information(chat, text):
         output = result.content        
         msg = output[output.find('<result>')+8:len(output)-9] # remove <result> 
         
-        print('result of sentiment extraction: ', msg)
+        print('result of information extraction: ', msg)
     except Exception:
         err_msg = traceback.format_exc()
         print('error message: ', err_msg)                    
@@ -505,9 +505,7 @@ def extract_pii(chat, text):
     else: 
         system = (
             """We want to de-identify some text by removing all personally identifiable information from this text so that it can be shared safely with external contractors.
-            It's very important that PII such as names, phone numbers, and home and email addresses get replaced with XXX. Put it in <result> tags.
-
-            Here is the text, inside <text></text> XML tags."""
+            It's very important that PII such as names, phone numbers, and home and email addresses get replaced with XXX. Put it in <result> tags."""
         )
         
     human = "<text>{text}</text>"
@@ -525,7 +523,7 @@ def extract_pii(chat, text):
         output = result.content        
         msg = output[output.find('<result>')+8:len(output)-9] # remove <result> 
         
-        print('result of sentiment extraction: ', msg)
+        print('result of removing PII : ', msg)
     except Exception:
         err_msg = traceback.format_exc()
         print('error message: ', err_msg)                    
