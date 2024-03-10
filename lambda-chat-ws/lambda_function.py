@@ -68,8 +68,6 @@ def get_parameter(modelId):
         }
 parameters = get_parameter(modelId)
 
-map_chain = dict() 
-
 chat = BedrockChat(
     model_id=modelId,
     client=boto3_bedrock, 
@@ -78,8 +76,7 @@ chat = BedrockChat(
     model_kwargs=parameters,
 )  
 
-map = dict() # Conversation
-
+map_chain = dict() 
 MSG_LENGTH = 100
 
 # load documents from s3 for pdf and txt
@@ -504,9 +501,9 @@ def lambda_handler(event, context):
 
                 requestId  = jsonBody['request_id']
                 try:
-                    msg, reference = getResponse(connectionId, jsonBody)
+                    msg = getResponse(connectionId, jsonBody)
 
-                    print('msg+reference: ', msg+reference)
+                    print('msg: ', msg)
                                         
                 except Exception:
                     err_msg = traceback.format_exc()
