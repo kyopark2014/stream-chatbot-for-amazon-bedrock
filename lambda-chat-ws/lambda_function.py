@@ -29,7 +29,6 @@ bedrock_region = os.environ.get('bedrock_region', 'us-west-2')
 modelId = os.environ.get('model_id', 'amazon.titan-tg1-large')
 print('model_id[:9]: ', modelId[:9])
 conversationMode = os.environ.get('conversationMode', 'false')
-debugMessageMode = os.environ.get('debugMessageMode', 'false')
 path = os.environ.get('path')
 doc_prefix = s3_prefix+'/'
    
@@ -234,9 +233,6 @@ def general_conversation(connectionId, requestId, chat, query):
     global time_for_inference, history_length, token_counter_history    
     time_for_inference = history_length = token_counter_history = 0
     
-    if debugMessageMode == 'true':  
-        start_time_for_inference = time.time()
-    
     if isKorean(query)==True :
         system = (
             "다음의 Human과 Assistant의 친근한 이전 대화입니다. Assistant은 상황에 맞는 구체적인 세부 정보를 충분히 제공합니다. Assistant의 이름은 서연이고, 모르는 질문을 받으면 솔직히 모른다고 말합니다."
@@ -273,6 +269,8 @@ def general_conversation(connectionId, requestId, chat, query):
             
         sendErrorMessage(connectionId, requestId, err_msg)    
         raise Exception ("Not able to request to LLM")
+    
+    return msg
 
 def isTyping(connectionId, requestId):    
     msg_proceeding = {
@@ -401,16 +399,10 @@ def getResponse(connectionId, jsonBody):
             textCount = len(text.split())
             print(f"query size: {querySize}, words: {textCount}")
 
-            if text == 'enableConversationMode':
-                conversationMode = 'true'
-                msg  = "Conversation mode is enabled"
-            elif text == 'disableConversationMode':
-                conversationMode = 'false'
-                msg  = "Conversation mode is disabled"
-            elif text == 'clearMemory':
-                chat_memory = ""
-                chat_memory = ConversationBufferMemory(human_prefix='Human', ai_prefix='Assistant')
-                map[userId] = chat_memory
+            if text == 'clearMemory':
+                memory_chain.clear()
+                map_chain[userId] = memory_chain
+                    
                 print('initiate the chat memory!')
                 msg  = "The chat memory was intialized in this session."
             else:            
