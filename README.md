@@ -359,9 +359,45 @@ const wss_url = `wss://${WebSocketapi.attrApiId}.execute-api.${region}.amazonaws
 const connection_url = `https://${WebSocketapi.attrApiId}.execute-api.${region}.amazonaws.com/${stage}`;
 ```
 
+
+
+
+## 직접 실습 해보기
+
+### 사전 준비 사항
+
+이 솔루션을 사용하기 위해서는 사전에 아래와 같은 준비가 되어야 합니다.
+
+- [AWS Account 생성](https://repost.aws/ko/knowledge-center/create-and-activate-aws-account)
+
+### CDK를 이용한 인프라 설치
+
+[deployment.md](./deployment.md)에 따라 인프라를 설치합니다.
+
+### 실행결과
+
+"서울을 여행하고 싶어. 무엇을 타고 여행하는것이 좋을까?"라고 입력하면 서울의 정보를 알려줍니다.
+
+![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/ec1940d6-3629-453b-87c9-680e30c72dbb)
+
+대명사를 이용해 "그럼 그 도시에서 지하철 요금은 얼마야?"로 문의하면 아래와 같이 서울 지하철 요금을 알려줍니다. 2023년 10월에 지하철 요금이 150원이 올라서 1400원(교통카드 기준)이므로 최신 정보를 반영하고 못하고 있지만, 대화 이력을 통해 서울의 지하철 요금을 확인할 수 있었습니다.
+
+
+![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/4ef5c736-7f6a-4653-865b-dbd13609da61)
+
+'서울'과 '지하철'이라는 단어를 넣지 않고 "그럼 환승도 가능해?"로 물었을때 아래와 같이 이전 대화 이력(chat history)을 이용하여 서울 지하철의 환승에 대해 설명하여 줍니다.
+
+![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/8fadc6e1-503e-4fba-9a73-a48f04ca923a)
+
+
 ## Prompt Engineering
 
-### 번역하기
+### 번역하기 
+
+"아마존 베드락을 이용해 주셔서 감사합니다. 편안한 대화를 즐기실 수 있으며, 파일을 업로드하시면 요약해 드릴 수 있습니다."로 입력하면 아래와 같은 변억 결과를 얻을 수 있습니다.
+
+![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/9ccb1b97-3cb6-4026-af88-1a8e4e386951)
+
 
 ChatPromptTemplate을 이용하여 번역시 입력/출력 언어를 지정합니다. 번역된 결과만을 얻기 위하여 <result> tag를 요청하고 결과에서는 해당 tag를 제거합니다.
 
@@ -399,51 +435,43 @@ def translate_text(chat, text):
     return msg[msg.find('<result>')+8:len(msg)-9] # remove <result> tag
 ```
 
-
-
-## 직접 실습 해보기
-
-### 사전 준비 사항
-
-이 솔루션을 사용하기 위해서는 사전에 아래와 같은 준비가 되어야 합니다.
-
-- [AWS Account 생성](https://repost.aws/ko/knowledge-center/create-and-activate-aws-account)
-
-### CDK를 이용한 인프라 설치
-
-[deployment.md](./deployment.md)에 따라 인프라를 설치합니다.
-
-### 실행결과
-
-#### 일반적인 대화
-
-"서울을 여행하고 싶어. 무엇을 타고 여행하는것이 좋을까?"라고 입력하면 서울의 정보를 알려줍니다.
-
-![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/ec1940d6-3629-453b-87c9-680e30c72dbb)
-
-대명사를 이용해 "그럼 그 도시에서 지하철 요금은 얼마야?"로 문의하면 아래와 같이 서울 지하철 요금을 알려줍니다. 2023년 10월에 지하철 요금이 150원이 올라서 1400원(교통카드 기준)이므로 최신 정보를 반영하고 못하고 있지만, 대화 이력을 통해 서울의 지하철 요금을 확인할 수 있었습니다.
-
-
-![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/4ef5c736-7f6a-4653-865b-dbd13609da61)
-
-'서울'과 '지하철'이라는 단어를 넣지 않고 "그럼 환승도 가능해?"로 물었을때 아래와 같이 이전 대화 이력(chat history)을 이용하여 서울 지하철의 환승에 대해 설명하여 줍니다.
-
-![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/8fadc6e1-503e-4fba-9a73-a48f04ca923a)
-
-
-#### 번역하기 
-
-"아마존 베드락을 이용해 주셔서 감사합니다. 편안한 대화를 즐기실 수 있으며, 파일을 업로드하시면 요약해 드릴 수 있습니다."로 입력하면 아래와 같은 변억 결과를 얻을 수 있습니다.
-
-![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/9ccb1b97-3cb6-4026-af88-1a8e4e386951)
-
-
-#### 문법 확인하기
+### 문법 확인하기
 
 "Thank you using Amazon Bedrock. You can enjoy aa comfortable convarsation, and if you upload a file, I can summarize it for you."을 넣으면 아래와 같이 잘못된 부분을 알려주고 수정하여 줍니다.
 
 ![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/c19829df-da6b-4582-b2af-082ba4ff9849)
 
+```python
+def check_grammer(chat, text):
+    if isKorean(text)==True:
+        system = (
+            "다음의 <article> tag안의 문장의 오류를 찾아서 설명하고, 오류가 수정된 문장을 답변 마지막에 추가하여 주세요."
+        )
+    else: 
+        system = (
+            "Here is pieces of article, contained in <article> tags. Find the error in the sentence and explain it, and add the corrected sentence at the end of your answer."
+        )
+        
+    human = "<article>{text}</article>"
+    
+    prompt = ChatPromptTemplate.from_messages([("system", system), ("human", human)])
+    
+    chain = prompt | chat    
+    try: 
+        result = chain.invoke(
+            {
+                "text": text
+            }
+        )
+        
+        msg = result.content
+    except Exception:
+        err_msg = traceback.format_exc()
+        print('error message: ', err_msg)                    
+        raise Exception ("Not able to request to LLM")
+    
+    return msg
+```
 
 #### Extracted Topic and sentiment
 
@@ -452,26 +480,152 @@ def translate_text(chat, text):
 ![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/e153b81d-996d-44e5-9c5e-40ab231aee82)
 
 
+```python
+def extract_sentiment(chat, text):
+    if isKorean(text)==True:
+        system = (
+            """아래의 <example> review와 Extracted Topic and sentiment 인 <result>가 있습니다.
+            <example>
+            객실은 작지만 깨끗하고 편안합니다. 프론트 데스크는 정말 분주했고 체크인 줄도 길었지만, 직원들은 프로페셔널하고 매우 유쾌하게 각 사람을 응대했습니다. 우리는 다시 거기에 머물것입니다.
+            </example>
+            <result>
+            청소: 긍정적, 
+            서비스: 긍정적
+            </result>
+
+            아래의 <review>에 대해서 위의 <result> 예시처럼 Extracted Topic and sentiment 을 만들어 주세요."""
+        )
+    else: 
+        system = (
+            """Here is <example> review and extracted topics and sentiments as <result>.
+
+            <example>
+            The room was small but clean and comfortable. The front desk was really busy and the check-in line was long, but the staff were professional and very pleasant with each person they helped. We will stay there again.
+            </example>
+
+            <result>
+            Cleanliness: Positive, 
+            Service: Positive
+            </result>"""
+        )
+        
+    human = "<review>{text}</review>"
+    
+    prompt = ChatPromptTemplate.from_messages([("system", system), ("human", human)])
+    
+    chain = prompt | chat    
+    try: 
+        result = chain.invoke(
+            {
+                "text": text
+            }
+        )        
+        msg = result.content                
+        
+    except Exception:
+        err_msg = traceback.format_exc()
+        print('error message: ', err_msg)                    
+        raise Exception ("Not able to request to LLM")
+    
+    return msg
+```
+
 #### Information extraction
 
 “John Park. Solutions Architect | WWCS Amazon Web Services Email: john@amazon.com Mobile: +82-10-1234-5555“로 입력후에 이메일이 추출되는지 확인합니다.
 
 ![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/b65f83e3-295f-46e9-a38f-6a6ae01f6ffa)
 
+```python
+def extract_information(chat, text):
+    if isKorean(text)==True:
+        system = (
+            """다음 텍스트에서 이메일 주소를 정확하게 복사하여 한 줄에 하나씩 적어주세요. 입력 텍스트에 정확하게 쓰여있는 이메일 주소만 적어주세요. 텍스트에 이메일 주소가 없다면, "N/A"라고 적어주세요. 또한 결과는 <result> tag를 붙여주세요."""
+        )
+    else: 
+        system = (
+            """Please precisely copy any email addresses from the following text and then write them, one per line.  Only write an email address if it's precisely spelled out in the input text. If there are no email addresses in the text, write "N/A".  Do not say anything else.  Put it in <result> tags."""
+        )
+        
+    human = "<text>{text}</text>"
+    
+    prompt = ChatPromptTemplate.from_messages([("system", system), ("human", human)])
+    
+    chain = prompt | chat    
+    try: 
+        result = chain.invoke(
+            {
+                "text": text
+            }
+        )        
+        output = result.content        
+        msg = output[output.find('<result>')+8:len(output)-9] # remove <result> 
+        
+    except Exception:
+        err_msg = traceback.format_exc()
+        print('error message: ', err_msg)                    
+        raise Exception ("Not able to request to LLM")
+    
+    return msg
+```
 
 #### PII(personally identifiable information) 삭제하기
 
 PII(Personal Identification Information)의 삭제의 예는 아래와 같습니다. "John Park, Ph.D. Solutions Architect | WWCS Amazon Web Services Email: john@amazon.com Mobile: +82-10-1234-4567"와 같이 입력하여 name, phone number, address를 삭제한 텍스트를 얻습니다. 프롬프트는 PII를 참조합니다.
 
+![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/0b678b6b-0fd7-470f-ba84-736eca58e10d)
+
+```python
+def extract_pii(chat, text):
+    if isKorean(text)==True:
+        system = (
+            """아래의 <text>에서 개인식별정보(PII)를 모두 제거하여 외부 계약자와 안전하게 공유할 수 있도록 합니다. 이름, 전화번호, 주소, 이메일을 XXX로 대체합니다. 또한 결과는 <result> tag를 붙여주세요."""
+        )
+    else: 
+        system = (
+            """We want to de-identify some text by removing all personally identifiable information from this text so that it can be shared safely with external contractors.
+            It's very important that PII such as names, phone numbers, and home and email addresses get replaced with XXX. Put it in <result> tags."""
+        )
+        
+    human = "<text>{text}</text>"
+    
+    prompt = ChatPromptTemplate.from_messages([("system", system), ("human", human)])
+    print('prompt: ', prompt)
+    
+    chain = prompt | chat    
+    try: 
+        result = chain.invoke(
+            {
+                "text": text
+            }
+        )        
+        output = result.content        
+        msg = output[output.find('<result>')+8:len(output)-9] # remove <result> 
+        
+        print('result of removing PII : ', msg)
+    except Exception:
+        err_msg = traceback.format_exc()
+        print('error message: ', err_msg)                    
+        raise Exception ("Not able to request to LLM")
+    
+    return msg
+```
+
 #### 복잡한 질문 (step-by-step)
 
 "I have two pet cats. One of them is missing a leg. The other one has a normal number of legs for a cat to have. In total, how many legs do my cats have?"를 입력하고 결과를 확인합니다.
+
+```python
+
+```
 
 #### 날짜/시간 추출하기
 
 메뉴에서 "Timestamp Extraction"을 선택하고, "지금은 2023년 12월 5일 18시 26분이야"라고 입력하면 prompt를 이용해 아래처럼 시간을 추출합니다.
 
+```python
 
+```
 
 
 ## 리소스 정리하기 
