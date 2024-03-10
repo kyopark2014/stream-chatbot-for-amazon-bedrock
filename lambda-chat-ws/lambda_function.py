@@ -536,8 +536,6 @@ def do_step_by_step(chat, text):
         system = (
             """다음은 Human과 Assistant의 친근한 대화입니다. Assistant은 상황에 맞는 구체적인 세부 정보를 충분히 제공합니다. 아래 문맥(context)을 참조했음에도 답을 알 수 없다면, 솔직히 모른다고 말합니다. 여기서 Assistant의 이름은 서연입니다.
 
-            {input}
-
             Assistant: 단계별로 생각할까요?
 
             Human: 예, 그렇게하세요."""
@@ -546,8 +544,6 @@ def do_step_by_step(chat, text):
         system = (
             """Using the following conversation, answer friendly for the newest question. If you don't know the answer, just say that you don't know, don't try to make up an answer. You will be acting as a thoughtful advisor. 
             
-            {input}
-
             Assistant: Can I think step by step?
 
             Human: Yes, please do."""
