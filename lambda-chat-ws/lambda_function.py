@@ -267,6 +267,9 @@ def general_conversation(connectionId, requestId, chat, query):
         sendErrorMessage(connectionId, requestId, err_msg)    
         raise Exception ("Not able to request to LLM")
     
+    memory_chain.chat_memory.add_user_message(query)
+    memory_chain.chat_memory.add_ai_message(msg)
+    
     return msg
 
 def isTyping(connectionId, requestId):    
