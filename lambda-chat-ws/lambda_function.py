@@ -561,8 +561,7 @@ def do_step_by_step(chat, text):
                 "text": text
             }
         )        
-        output = result.content        
-        msg = output[output.find('<result>')+8:len(output)-9] # remove <result> 
+        msg = result.content        
         
         print('result of sentiment extraction: ', msg)
     except Exception:
