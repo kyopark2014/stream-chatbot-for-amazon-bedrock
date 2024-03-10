@@ -464,6 +464,39 @@ def extract_sentiment(chat, text):
     
     return msg
 
+def extract_information(chat, text):
+    if isKorean(text)==True:
+        system = (
+            """다음 텍스트에서 이메일 주소를 정확하게 복사하여 한 줄에 하나씩 적어주세요. 입력 텍스트에 정확하게 쓰여있는 이메일 주소만 적어주세요. 텍스트에 이메일 주소가 없다면, "N/A"라고 적어주세요. 또한 결과는 <result> tag를 붙여주세요."""
+        )
+    else: 
+        system = (
+            """Please precisely copy any email addresses from the following text and then write them, one per line.  Only write an email address if it's precisely spelled out in the input text. If there are no email addresses in the text, write "N/A".  Do not say anything else.  Put it in <result> tags."""
+        )
+        
+    human = "<text>{text}</text>"
+    
+    prompt = ChatPromptTemplate.from_messages([("system", system), ("human", human)])
+    print('prompt: ', prompt)
+    
+    chain = prompt | chat    
+    try: 
+        result = chain.invoke(
+            {
+                "text": text
+            }
+        )        
+        output = result.content        
+        msg = output[output.find('<result>')+8:len(output)-9] # remove <result> 
+        
+        print('result of sentiment extraction: ', msg)
+    except Exception:
+        err_msg = traceback.format_exc()
+        print('error message: ', err_msg)                    
+        raise Exception ("Not able to request to LLM")
+    
+    return msg
+
 def extract_pii(chat, text):
     if isKorean(text)==True:
         system = (
@@ -677,14 +710,14 @@ def getResponse(connectionId, jsonBody):
                     msg = check_grammer(chat, text)  
                 elif convType == "sentiment":
                     msg = extract_sentiment(chat, text)
-                elif convType == "extraction":
-                    msg = general_conversation(connectionId, requestId, chat, text)   
+                elif convType == "extraction": # infomation extraction
+                    msg = extract_information(chat, text)  
                 elif convType == "pii":
-                    msg = general_conversation(connectionId, requestId, chat, text)   
+                    msg = extract_pii(chat, text)   
                 elif convType == "step-by-step":
-                    msg = general_conversation(connectionId, requestId, chat, text)   
+                    msg = do_step_by_step(chat, text)  
                 elif convType == "timestamp-extraction":
-                    msg = general_conversation(connectionId, requestId, chat, text)   
+                    msg = extract_timestamp(chat, text)  
                 else:
                     msg = general_conversation(connectionId, requestId, chat, text)  
                     
