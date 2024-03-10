@@ -3,19 +3,23 @@ import boto3
 import os
 import time
 import datetime
-from io import BytesIO
 import PyPDF2
 import csv
 import sys
 import re
+import traceback
 
-from langchain.prompts import PromptTemplate
+from botocore.config import Config
+from io import BytesIO
+from urllib import parse
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.docstore.document import Document
 from langchain.chains.summarize import load_summarize_chain
-from langchain.llms.bedrock import Bedrock
-from langchain.chains import ConversationChain
 from langchain.memory import ConversationBufferMemory
+from langchain_community.chat_models import BedrockChat
+from langchain_core.prompts import MessagesPlaceholder, ChatPromptTemplate
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+from langchain.memory import ConversationBufferWindowMemory
 
 s3 = boto3.client('s3')
 s3_bucket = os.environ.get('s3_bucket') # bucket name
@@ -23,12 +27,26 @@ s3_prefix = os.environ.get('s3_prefix')
 callLogTableName = os.environ.get('callLogTableName')
 bedrock_region = os.environ.get('bedrock_region', 'us-west-2')
 modelId = os.environ.get('model_id', 'amazon.titan-tg1-large')
-print('model_id: ', modelId)
+print('model_id[:9]: ', modelId[:9])
 conversationMode = os.environ.get('conversationMode', 'false')
+debugMessageMode = os.environ.get('debugMessageMode', 'false')
+path = os.environ.get('path')
+doc_prefix = s3_prefix+'/'
    
+# websocket
+connection_url = os.environ.get('connection_url')
+client = boto3.client('apigatewaymanagementapi', endpoint_url=connection_url)
+print('connection_url: ', connection_url)
+
+# bedrock   
 boto3_bedrock = boto3.client(
     service_name='bedrock-runtime',
     region_name=bedrock_region,
+    config=Config(
+        retries = {
+            'max_attempts': 30
+        }            
+    )
 )
 
 HUMAN_PROMPT = "\n\nHuman:"
@@ -41,9 +59,9 @@ def get_parameter(modelId):
             "temperature":0,
             "topP":0.9
         }
-    elif modelId == 'anthropic.claude-v1' or modelId == 'anthropic.claude-v2':
+    elif modelId[:9] == 'anthropic':
         return {
-            "max_tokens_to_sample":1024,
+            "max_tokens":1024,
             "temperature":0.1,
             "top_k":250,
             "top_p": 0.9,
@@ -51,39 +69,19 @@ def get_parameter(modelId):
         }
 parameters = get_parameter(modelId)
 
-llm = Bedrock(
-    model_id=modelId, 
+map_chain = dict() 
+
+chat = BedrockChat(
+    model_id=modelId,
     client=boto3_bedrock, 
-    #streaming=True,
-    model_kwargs=parameters)
+    streaming=True,
+    callbacks=[StreamingStdOutCallbackHandler()],
+    model_kwargs=parameters,
+)  
 
 map = dict() # Conversation
 
-def get_prompt_template(query):
-    # check korean
-    pattern_hangul = re.compile('[\u3131-\u3163\uac00-\ud7a3]+')
-    word_kor = pattern_hangul.search(str(query))
-    print('word_kor: ', word_kor)
-
-    if word_kor:    
-        condense_template = """다음은 Human과 Assistant의 친근한 대화입니다. Assistant은 상황에 맞는 구체적인 세부 정보를 충분히 제공합니다. 아래 문맥(context)을 참조했음에도 답을 알 수 없다면, 솔직히 모른다고 말합니다.
-
-        Current conversation:
-        {history}
-            
-        Human: {input}
-            
-        Assistant:"""
-    else:  # English
-        condense_template = """Using the following conversation, answer friendly for the newest question. If you don't know the answer, just say that you don't know, don't try to make up an answer. You will be acting as a thoughtful advisor.
-
-        {history}
-            
-        Human: {input}
-
-        Assistant:"""
-    
-    return PromptTemplate.from_template(condense_template)
+MSG_LENGTH = 100
 
 # load documents from s3 for pdf and txt
 def load_document(file_type, s3_file_name):
@@ -152,43 +150,41 @@ def load_csv_document(s3_file_name):
 
     return docs
 
-def get_summary(texts):    
-    # check korean
-    pattern_hangul = re.compile('[\u3131-\u3163\uac00-\ud7a3]+') 
-    word_kor = pattern_hangul.search(str(texts))
-    print('word_kor: ', word_kor)
+def get_summary(chat, docs):    
+    text = ""
+    for doc in docs:
+        text = text + doc
     
-    if word_kor:
-        #prompt_template = """\n\nHuman: 다음 텍스트를 간결하게 요약하세오. 텍스트의 요점을 다루는 글머리 기호로 응답을 반환합니다.
-        prompt_template = """\n\nHuman: 다음 텍스트를 요약해서 500자 이내로 설명하세오.
-
-        {text}
-        
-        Assistant:"""        
-    else:         
-        prompt_template = """\n\nHuman: Write a concise summary of the following:
-
-        {text}
-        
-        Assistant:"""
+    if isKorean(text)==True:
+        system = (
+            "다음의 <article> tag안의 문장을 요약해서 500자 이내로 설명하세오."
+        )
+    else: 
+        system = (
+            "Here is pieces of article, contained in <article> tags. Write a concise summary within 500 characters."
+        )
     
-    PROMPT = PromptTemplate(template=prompt_template, input_variables=["text"])
-    chain = load_summarize_chain(llm, chain_type="stuff", prompt=PROMPT)
-
-    docs = [
-        Document(
-            page_content=t
-        ) for t in texts[:3]
-    ]
-    summary = chain.run(docs)
-    print('summary: ', summary)
-
-    if summary == '':  # error notification
-        summary = 'Fail to summarize the document. Try agan...'
-        return summary
-    else:
-        # return summary[1:len(summary)-1]   
-        return summary
+    human = "<article>{text}</article>"
+    
+    prompt = ChatPromptTemplate.from_messages([("system", system), ("human", human)])
+    print('prompt: ', prompt)
+    
+    chain = prompt | chat    
+    try: 
+        result = chain.invoke(
+            {
+                "text": text
+            }
+        )
+        
+        summary = result.content
+        print('result of summarization: ', summary)
+    except Exception:
+        err_msg = traceback.format_exc()
+        print('error message: ', err_msg)                    
+        raise Exception ("Not able to request to LLM")
+    
+    return summary
     
 def load_chatHistory(userId, allowTime, chat_memory):
     dynamodb_client = boto3.client('dynamodb')
@@ -221,34 +217,161 @@ def getAllowTime():
 
     return timeStr
 
-def lambda_handler(event, context):
-    print(event)
-    userId  = event['user_id']
+def isKorean(text):
+    # check korean
+    pattern_hangul = re.compile('[\u3131-\u3163\uac00-\ud7a3]+')
+    word_kor = pattern_hangul.search(str(text))
+    # print('word_kor: ', word_kor)
+
+    if word_kor and word_kor != 'None':
+        print('Korean: ', word_kor)
+        return True
+    else:
+        print('Not Korean: ', word_kor)
+        return False
+
+def general_conversation(connectionId, requestId, chat, query):
+    global time_for_inference, history_length, token_counter_history    
+    time_for_inference = history_length = token_counter_history = 0
+    
+    if debugMessageMode == 'true':  
+        start_time_for_inference = time.time()
+    
+    if isKorean(query)==True :
+        system = (
+            "다음의 Human과 Assistant의 친근한 이전 대화입니다. Assistant은 상황에 맞는 구체적인 세부 정보를 충분히 제공합니다. Assistant의 이름은 서연이고, 모르는 질문을 받으면 솔직히 모른다고 말합니다."
+        )
+    else: 
+        system = (
+            "Using the following conversation, answer friendly for the newest question. If you don't know the answer, just say that you don't know, don't try to make up an answer. You will be acting as a thoughtful advisor."
+        )
+    
+    human = "{input}"
+    
+    prompt = ChatPromptTemplate.from_messages([("system", system), MessagesPlaceholder(variable_name="history"), ("human", human)])
+    print('prompt: ', prompt)
+    
+    history = memory_chain.load_memory_variables({})["chat_history"]
+    print('memory_chain: ', history)
+                
+    chain = prompt | chat    
+    try: 
+        isTyping(connectionId, requestId)  
+        stream = chain.invoke(
+            {
+                "history": history,
+                "input": query,
+            }
+        )
+        msg = readStreamMsg(connectionId, requestId, stream.content)    
+                            
+        msg = stream.content
+        print('msg: ', msg)
+    except Exception:
+        err_msg = traceback.format_exc()
+        print('error message: ', err_msg)        
+            
+        sendErrorMessage(connectionId, requestId, err_msg)    
+        raise Exception ("Not able to request to LLM")
+
+def isTyping(connectionId, requestId):    
+    msg_proceeding = {
+        'request_id': requestId,
+        'msg': 'Proceeding...',
+        'status': 'istyping'
+    }
+    #print('result: ', json.dumps(result))
+    sendMessage(connectionId, msg_proceeding)
+        
+def readStreamMsg(connectionId, requestId, stream):
+    msg = ""
+    if stream:
+        for event in stream:
+            #print('event: ', event)
+            msg = msg + event
+
+            result = {
+                'request_id': requestId,
+                'msg': msg,
+                'status': 'proceeding'
+            }
+            #print('result: ', json.dumps(result))
+            sendMessage(connectionId, result)
+    # print('msg: ', msg)
+    return msg
+
+def sendMessage(id, body):
+    try:
+        client.post_to_connection(
+            ConnectionId=id, 
+            Data=json.dumps(body)
+        )
+    except Exception:
+        err_msg = traceback.format_exc()
+        print('err_msg: ', err_msg)
+        raise Exception ("Not able to send a message")
+
+def load_chat_history(userId, allowTime):
+    dynamodb_client = boto3.client('dynamodb')
+
+    response = dynamodb_client.query(
+        TableName=callLogTableName,
+        KeyConditionExpression='user_id = :userId AND request_time > :allowTime',
+        ExpressionAttributeValues={
+            ':userId': {'S': userId},
+            ':allowTime': {'S': allowTime}
+        }
+    )
+    # print('query result: ', response['Items'])
+
+    for item in response['Items']:
+        text = item['body']['S']
+        msg = item['msg']['S']
+        type = item['type']['S']
+
+        if type == 'text':
+            memory_chain.chat_memory.add_user_message(text)
+            if len(msg) > MSG_LENGTH:
+                memory_chain.chat_memory.add_ai_message(msg[:MSG_LENGTH])                          
+            else:
+                memory_chain.chat_memory.add_ai_message(msg)     
+    
+def sendErrorMessage(connectionId, requestId, msg):
+    errorMsg = {
+        'request_id': requestId,
+        'msg': msg,
+        'status': 'error'
+    }
+    print('error: ', json.dumps(errorMsg))
+    sendMessage(connectionId, errorMsg)
+
+def getResponse(connectionId, jsonBody):
+    print('jsonBody: ', jsonBody)
+    
+    userId  = jsonBody['user_id']
     print('userId: ', userId)
-    requestId  = event['request_id']
+    requestId  = jsonBody['request_id']
     print('requestId: ', requestId)
-    requestTime  = event['request_time']
+    requestTime  = jsonBody['request_time']
     print('requestTime: ', requestTime)
-    type  = event['type']
+    type  = jsonBody['type']
     print('type: ', type)
-    body = event['body']
+    body = jsonBody['body']
     print('body: ', body)
 
-    global modelId, llm, parameters, conversation, conversationMode, map, chat_memory
+    global modelId, llm, parameters, conversationMode, map_chain, memory_chain
 
-    # create chat_memory
-    if userId in map:  
-        chat_memory = map[userId]
-        print('chat_memory exist. reuse it!')
+    # create memory
+    if userId in map_chain:  
+        print('memory exist. reuse it!')        
+        memory_chain = map_chain[userId]
     else: 
-        chat_memory = ConversationBufferMemory(human_prefix='Human', ai_prefix='Assistant')
-        map[userId] = chat_memory
-        print('chat_memory does not exist. create new one!')
+        print('memory does not exist. create new one!')        
+        memory_chain = ConversationBufferWindowMemory(memory_key="chat_history", output_key='answer', return_messages=True, k=10)
+        map_chain[userId] = memory_chain
 
         allowTime = getAllowTime()
-        load_chatHistory(userId, allowTime, chat_memory)
-
-        conversation = ConversationChain(llm=llm, verbose=False, memory=chat_memory)
+        load_chat_history(userId, allowTime)
     
     start = int(time.time())    
 
@@ -292,33 +415,51 @@ def lambda_handler(event, context):
                 msg  = "The chat memory was intialized in this session."
             else:            
                 if conversationMode == 'true':
-                    conversation.prompt = get_prompt_template(text)
-                    msg = conversation.predict(input=text)
-
-                    # extract chat history for debug
-                    chats = chat_memory.load_memory_variables({})
-                    chat_history_all = chats['history']
-                    print('chat_history_all: ', chat_history_all)
+                    msg = general_conversation(connectionId, requestId, chat, text)    
                 else:
                     msg = llm(HUMAN_PROMPT+text+AI_PROMPT)
             #print('msg: ', msg)
                 
         elif type == 'document':
+            isTyping(connectionId, requestId)
+            
             object = body
-        
-            file_type = object[object.rfind('.')+1:len(object)]
+            file_type = object[object.rfind('.')+1:len(object)]            
             print('file_type: ', file_type)
             
             if file_type == 'csv':
-                docs = load_csv_document(object)
-                texts = []
+                docs = load_csv_document(path, doc_prefix, object)
+                contexts = []
                 for doc in docs:
-                    texts.append(doc.page_content)
-                print('texts: ', texts)
-            else:
+                    contexts.append(doc.page_content)
+                print('contexts: ', contexts)
+
+                msg = get_summary(chat, contexts)
+                        
+            elif file_type == 'pdf' or file_type == 'txt' or file_type == 'md' or file_type == 'pptx' or file_type == 'docx':
                 texts = load_document(file_type, object)
-            
-            msg = get_summary(texts)
+
+                docs = []
+                for i in range(len(texts)):
+                    docs.append(
+                        Document(
+                            page_content=texts[i],
+                            metadata={
+                                'name': object,
+                                # 'page':i+1,
+                                'uri': path+doc_prefix+parse.quote(object)
+                            }
+                        )
+                    )
+                print('docs[0]: ', docs[0])    
+                print('docs size: ', len(docs))
+
+                contexts = []
+                for doc in docs:
+                    contexts.append(doc.page_content)
+                print('contexts: ', contexts)
+
+                msg = get_summary(chat, contexts)
                 
         elapsed_time = int(time.time()) - start
         print("total run time(sec): ", elapsed_time)
@@ -337,13 +478,55 @@ def lambda_handler(event, context):
         client = boto3.client('dynamodb')
         try:
             resp =  client.put_item(TableName=callLogTableName, Item=item)
-        except: 
-            raise Exception ("Not able to write into dynamodb")
-        
-        print('resp, ', resp)
+        except Exception:
+            err_msg = traceback.format_exc()
+            print('error message: ', err_msg)
+            raise Exception ("Not able to write into dynamodb")               
+        #print('resp, ', resp)
 
     return {
         'statusCode': 200,
         'request_id': requestId,
         'msg': msg,
+    }
+
+def lambda_handler(event, context):
+    # print('event: ', event)    
+    msg = ""
+    if event['requestContext']: 
+        connectionId = event['requestContext']['connectionId']        
+        routeKey = event['requestContext']['routeKey']
+        
+        if routeKey == '$connect':
+            print('connected!')
+        elif routeKey == '$disconnect':
+            print('disconnected!')
+        else:
+            body = event.get("body", "")
+            #print("data[0:8]: ", body[0:8])
+            if body[0:8] == "__ping__":
+                # print("keep alive!")                
+                sendMessage(connectionId, "__pong__")
+            else:
+                print('connectionId: ', connectionId)
+                print('routeKey: ', routeKey)
+        
+                jsonBody = json.loads(body)
+                print('request body: ', json.dumps(jsonBody))
+
+                requestId  = jsonBody['request_id']
+                try:
+                    msg, reference = getResponse(connectionId, jsonBody)
+
+                    print('msg+reference: ', msg+reference)
+                                        
+                except Exception:
+                    err_msg = traceback.format_exc()
+                    print('err_msg: ', err_msg)
+
+                    sendErrorMessage(connectionId, requestId, err_msg)    
+                    raise Exception ("Not able to send a message")
+
+    return {
+        'statusCode': 200
     }

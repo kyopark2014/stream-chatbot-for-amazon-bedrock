@@ -16,12 +16,13 @@ const region = process.env.CDK_DEFAULT_REGION;
 const debug = false;
 const stage = 'dev';
 const s3_prefix = 'docs';
-const model_id = "anthropic.claude-instant-v1"; // amazon.titan-tg1-large, amazon.titan-tg1-xlarge, anthropic.claude-v1, anthropic.claude-v2, anthropic.claude-instant-v1
+const model_id = "anthropic.claude-3-sonnet-20240229-v1:0"; // amazon.titan-tg1-large, amazon.titan-tg1-xlarge, anthropic.claude-v1, anthropic.claude-v2, anthropic.claude-instant-v1 anthropic.claude-3-sonnet-20240229-v1:0
 const projectName = `stream-chatbot`; 
 
 const bucketName = `storage-for-${projectName}-${region}`; 
 const bedrock_region = "us-east-1";  // "us-east-1" "us-west-2" 
 const conversationMode = 'true'; 
+const debugMessageMode = 'true';
 
 export class CdkStreamChatbotStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -461,9 +462,11 @@ export class CdkStreamChatbotStack extends cdk.Stack {
         model_id: model_id,
         s3_bucket: s3Bucket.bucketName,
         s3_prefix: s3_prefix,
+        path: 'https://'+distribution.domainName+'/',   
         callLogTableName: callLogTableName,
         conversationMode: conversationMode,
-        connection_url: connection_url
+        connection_url: connection_url,
+        debugMessageMode: debugMessageMode
       }
     });     
     lambdaChatWebsocket.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));  
