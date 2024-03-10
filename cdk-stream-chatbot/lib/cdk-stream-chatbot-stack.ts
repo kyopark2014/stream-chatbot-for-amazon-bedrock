@@ -21,7 +21,6 @@ const projectName = `stream-chatbot`;
 
 const bucketName = `storage-for-${projectName}-${region}`; 
 const bedrock_region = "us-east-1";  // "us-east-1" "us-west-2" 
-const conversationMode = 'true'; 
 
 export class CdkStreamChatbotStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -412,7 +411,6 @@ export class CdkStreamChatbotStack extends cdk.Stack {
         s3_prefix: s3_prefix,
         path: 'https://'+distribution.domainName+'/',   
         callLogTableName: callLogTableName,
-        conversationMode: conversationMode,
         connection_url: connection_url
       }
     });     
