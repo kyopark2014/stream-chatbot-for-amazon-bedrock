@@ -97,51 +97,77 @@ import boto3
 boto3_bedrock = boto3.client(
     service_name='bedrock-runtime',
     region_name=bedrock_region,
+    config=Config(
+        retries = {
+            'max_attempts': 30
+        }            
+    )
 )
 ```
 
-아래와 같이 LLM에서 어플리케이션을 편리하게 만드는 프레임워크인 [LangChain](https://docs.langchain.com/docs/)을 사용하여 [Bedrock](https://python.langchain.com/docs/integrations/llms/bedrock)을 정의합니다. 이때 stream으로 출력을 보여줄 수 있도록 streaming을 True로 설정합니다. 또한 [StreamingStdOutCallbackHandler](https://api.python.langchain.com/en/latest/callbacks/langchain.callbacks.streaming_stdout.StreamingStdOutCallbackHandler.html)을 callback으로 등록합니다.
+아래와 같이 LLM에서 어플리케이션을 편리하게 만드는 프레임워크인 [LangChain](https://docs.langchain.com/docs/)을 사용하여 [Bedrock Chat](https://python.langchain.com/docs/integrations/chat/bedrock)을 정의합니다. 이때 stream으로 출력을 보여줄 수 있도록 streaming을 True로 설정합니다. 또한 [StreamingStdOutCallbackHandler](https://api.python.langchain.com/en/latest/callbacks/langchain.callbacks.streaming_stdout.StreamingStdOutCallbackHandler.html)을 callback으로 등록합니다.
 
 ```python
-from langchain.llms.bedrock import Bedrock
+from langchain_community.chat_models import BedrockChat
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 
-llm = Bedrock(
-    model_id=modelId, 
+chat = BedrockChat(
+    model_id=modelId,
     client=boto3_bedrock, 
     streaming=True,
     callbacks=[StreamingStdOutCallbackHandler()],
-    model_kwargs=parameters)
+    model_kwargs=parameters,
+)  
 ```
 
-채팅 이력은 [ConversationBufferMemory](https://api.python.langchain.com/en/latest/memory/langchain.memory.buffer.ConversationBufferMemory.html)을 이용하여 chat_memory으로 저장합니다.
+사용자가 WebSocket을 이용하여 API Gateway로 보낸 메시지가 [lambda-chat-ws](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/blob/main/lambda-chat-ws/lambda_function.py)에 전달되면, 아래와 같이 event에서 connectionId와 routeKey를 추출할 수 있습니다. routeKey가 "default"일때 사용자게 보낸 메시지가 들어오는데 여기서 'body"를 추출하여, json포맷의 데이터에서 사용자의 입력인 'text'를 추출합니다. 이후 아래와 같이 conversation.predict()을 이용하여 LLM에 답변을 요청합니다. 
 
 ```python
-from langchain.memory import ConversationBufferMemory
-chat_memory = ConversationBufferMemory(human_prefix='Human', ai_prefix='Assistant')
-```
-
-채팅 이력까지 고려한 답변을 구하기 위하여, [ConversationChain](https://js.langchain.com/docs/api/chains/classes/ConversationChain)을 이용합니다. 사용자가 WebSocket을 이용하여 API Gateway로 보낸 메시지가 [lambda-chat-ws](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/blob/main/lambda-chat-ws/lambda_function.py)에 전달되면, 아래와 같이 event에서 connectionId와 routeKey를 추출할 수 있습니다. routeKey가 "default"일때 사용자게 보낸 메시지가 들어오는데 여기서 'body"를 추출하여, json포맷의 데이터에서 사용자의 입력인 'text'를 추출합니다. 이후 아래와 같이 conversation.predict()을 이용하여 LLM에 답변을 요청합니다. 
-
-```python
-from langchain.chains import ConversationChain
-conversation = ConversationChain(llm=llm, verbose=False, memory=chat_memory)
-
-def lambda_handler(event, context):
-    if event['requestContext']: 
-        connectionId = event['requestContext']['connectionId']
-        routeKey = event['requestContext']['routeKey']
-
-        if routeKey == '$connect':
-            print('connected!')
-        elif routeKey == '$disconnect':
-            print('disconnected!')
-        else:   # $default
-            jsonBody = json.loads(event.get("body", ""))
-            text = jsonBody['body']
-
-        stream = conversation.predict(input=text)
-        msg = readStreamMsg(connectionId, requestId, msg)
+def general_conversation(connectionId, requestId, chat, query):
+    global time_for_inference, history_length, token_counter_history    
+    time_for_inference = history_length = token_counter_history = 0
+    
+    if isKorean(query)==True :
+        system = (
+            "다음의 Human과 Assistant의 친근한 이전 대화입니다. Assistant은 상황에 맞는 구체적인 세부 정보를 충분히 제공합니다. Assistant의 이름은 서연이고, 모르는 질문을 받으면 솔직히 모른다고 말합니다."
+        )
+    else: 
+        system = (
+            "Using the following conversation, answer friendly for the newest question. If you don't know the answer, just say that you don't know, don't try to make up an answer. You will be acting as a thoughtful advisor."
+        )
+    
+    human = "{input}"
+    
+    prompt = ChatPromptTemplate.from_messages([("system", system), MessagesPlaceholder(variable_name="history"), ("human", human)])
+    print('prompt: ', prompt)
+    
+    history = memory_chain.load_memory_variables({})["chat_history"]
+    print('memory_chain: ', history)
+                
+    chain = prompt | chat    
+    try: 
+        isTyping(connectionId, requestId)  
+        stream = chain.invoke(
+            {
+                "history": history,
+                "input": query,
+            }
+        )
+        msg = readStreamMsg(connectionId, requestId, stream.content)    
+                            
+        msg = stream.content
+        print('msg: ', msg)
+    except Exception:
+        err_msg = traceback.format_exc()
+        print('error message: ', err_msg)        
+            
+        sendErrorMessage(connectionId, requestId, err_msg)    
+        raise Exception ("Not able to request to LLM")
+    
+    memory_chain.chat_memory.add_user_message(query)
+    memory_chain.chat_memory.add_ai_message(msg)
+    
+    return msg
 ```
 
 LLM의 답변은 stream으로 들어오는데, 아래와 같이 stream에서 event를 추출한 후에 sendMessage() 이용하여 client로 답변을 전달합니다. 또한, client에서 답변 메시지를 구분하여 표시하기 위해서, "request_id"를 함께 전달합니다.  
@@ -155,7 +181,8 @@ def readStreamMsg(connectionId, requestId, stream):
 
             result = {
                 'request_id': requestId,
-                'msg': msg
+                'msg': msg,
+                'status': 'proceeding'
             }
             sendMessage(connectionId, result)
     return msg
@@ -173,7 +200,9 @@ def sendMessage(id, body):
             ConnectionId=id, 
             Data=json.dumps(body)
         )
-    except: 
+    except Exception:
+        err_msg = traceback.format_exc()
+        print('err_msg: ', err_msg)
         raise Exception ("Not able to send a message")
 ```
 
@@ -262,27 +291,26 @@ try {
 }
 ```
 
-[lambda-chat-ws](./lambda-chat-ws/lambda_function.py)는 아래와 같이 채팅 이력을 저장하는 map을 관리합니다. 사용자의 요청에서 userId를 추출하여 [lambda-chat-ws](./lambda-chat-ws/lambda_function.py)가 채팅 이력을 가지고 있지 않은 경우에 chat_memory를 생성하여, 기존 이력은 load_chatHistory()로 읽어서 ConversationChain으로 관리합니다.
+채팅 이력은 [ConversationBufferWindowMemory](https://python.langchain.com/docs/modules/memory/types/buffer_window)을 이용하여 memory_chain으로 저장합니다. Lambda가 시작할때 map_chain에 접속한 사용자(userId)에 대한 대화 이력이 있는지 확인합니다. 없다면 DynamoDB에 저장된 데이터를 로드합니다. 여기서는 모든 대화 이력을 읽어들이지 않고 일정시간 이후(allowTime)의 대화 이력을 가져옵니다.
 
 ```python
-map = dict() # Conversation
+from langchain.memory import ConversationBufferWindowMemory
 
-if userId in map:  
-    chat_memory = map[userId]
+map_chain = dict()
+
+# create memory
+if userId in map_chain:  
+    print('memory exist. reuse it!')        
+    memory_chain = map_chain[userId]
 else: 
-    chat_memory = ConversationBufferMemory(human_prefix='Human', ai_prefix='Assistant')
-    map[userId] = chat_memory
+    print('memory does not exist. create new one!')        
+    memory_chain = ConversationBufferWindowMemory(memory_key="chat_history", output_key='answer', return_messages=True, k=10)
+    map_chain[userId] = memory_chain
 
     allowTime = getAllowTime()
-    load_chatHistory(userId, allowTime, chat_memory)
+    load_chat_history(userId, allowTime)
 
-    conversation = ConversationChain(llm=llm, verbose=False, memory=chat_memory)
-```
-
-load_chatHistory()은 아래와 같이 userId와 allowTime를 이용하여 DynamoDB에서 채팅 이력을 조회하여 chat_memory에 저장합니다.
-
-```python
-def load_chatHistory(userId, allowTime, chat_memory):
+def load_chat_history(userId, allowTime):
     dynamodb_client = boto3.client('dynamodb')
 
     response = dynamodb_client.query(
@@ -293,6 +321,7 @@ def load_chatHistory(userId, allowTime, chat_memory):
             ':allowTime': {'S': allowTime}
         }
     )
+    # print('query result: ', response['Items'])
 
     for item in response['Items']:
         text = item['body']['S']
@@ -300,8 +329,19 @@ def load_chatHistory(userId, allowTime, chat_memory):
         type = item['type']['S']
 
         if type == 'text':
-            chat_memory.save_context({"input": text}, {"output": msg})    
-```            
+            memory_chain.chat_memory.add_user_message(text)
+            if len(msg) > MSG_LENGTH:
+                memory_chain.chat_memory.add_ai_message(msg[:MSG_LENGTH])                          
+            else:
+                memory_chain.chat_memory.add_ai_message(msg)     
+```
+
+새로운 Dialog가 추가 되면 아래와 같이 memory_chain에 수신 메시지(query)와 답변(msg)을 저장합니다.
+
+```python
+memory_chain.chat_memory.add_user_message(query)
+memory_chain.chat_memory.add_ai_message(msg)
+```
 
 ### WebSocket을 지원하는 API Gateway를 구현하기
 
