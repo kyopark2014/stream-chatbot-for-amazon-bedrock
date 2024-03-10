@@ -122,26 +122,6 @@ export class CdkStreamChatbotStack extends cdk.Stack {
         statements: [BedrockPolicy],
       }),
     );      
-
-    // Lambda for chat using langchain (container)
-    const lambdaChatApi = new lambda.DockerImageFunction(this, `lambda-chat-for-${projectName}`, {
-      description: 'lambda for chat api',
-      functionName: `lambda-chat-api-for-${projectName}`,
-      code: lambda.DockerImageCode.fromImageAsset(path.join(__dirname, '../../lambda-chat')),
-      timeout: cdk.Duration.seconds(300),
-      role: roleLambda,
-      environment: {
-        bedrock_region: bedrock_region,
-        model_id: model_id,
-        s3_bucket: s3Bucket.bucketName,
-        s3_prefix: s3_prefix,
-        callLogTableName: callLogTableName,
-        conversationMode: conversationMode
-      }
-    });     
-    lambdaChatApi.grantInvoke(new iam.ServicePrincipal('apigateway.amazonaws.com'));  
-    s3Bucket.grantRead(lambdaChatApi); // permission for s3
-    callLogDataTable.grantReadWriteData(lambdaChatApi); // permission for dynamo
     
     // role
     const role = new iam.Role(this, `api-role-for-${projectName}`, {
@@ -173,38 +153,7 @@ export class CdkStreamChatbotStack extends cdk.Stack {
         // dataTraceEnabled: true,
       },
     });  
-
-    // POST method
-    const chat = api.root.addResource('chat');
-    chat.addMethod('POST', new apiGateway.LambdaIntegration(lambdaChatApi, {
-      passthroughBehavior: apiGateway.PassthroughBehavior.WHEN_NO_TEMPLATES,
-      credentialsRole: role,
-      integrationResponses: [{
-        statusCode: '200',
-      }], 
-      proxy:false, 
-    }), {
-      methodResponses: [   // API Gateway sends to the client that called a method.
-        {
-          statusCode: '200',
-          responseModels: {
-            'application/json': apiGateway.Model.EMPTY_MODEL,
-          }, 
-        }
-      ]
-    }); 
-
-    if(debug) {
-      new cdk.CfnOutput(this, `apiUrl-chat-for-${projectName}`, {
-        value: api.url,
-        description: 'The url of API Gateway',
-      }); 
-      new cdk.CfnOutput(this, `curlUrl-chat-for-${projectName}`, {
-        value: "curl -X POST "+api.url+'chat -H "Content-Type: application/json" -d \'{"text":"who are u?"}\'',
-        description: 'Curl commend of API Gateway',
-      }); 
-    }
-
+    
     // cloudfront setting 
     distribution.addBehavior("/chat", new origins.RestApiOrigin(api), {
       cachePolicy: cloudFront.CachePolicy.CACHING_DISABLED,

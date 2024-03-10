@@ -1,4 +1,4 @@
-const protocol = 'WEBSOCKET'; // WEBSOCKET or HTTP
+const protocol = 'WEBSOCKET'; // WEBSOCKET 
 const langstate = 'korean'; // korean or english
 
 // earn endpoint 
