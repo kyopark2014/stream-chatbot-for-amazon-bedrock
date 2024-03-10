@@ -266,9 +266,6 @@ def general_conversation(connectionId, requestId, chat, query):
         sendErrorMessage(connectionId, requestId, err_msg)    
         raise Exception ("Not able to request to LLM")
     
-    memory_chain.chat_memory.add_user_message(query)
-    memory_chain.chat_memory.add_ai_message(msg)
-    
     return msg
 
 def isTyping(connectionId, requestId):    
@@ -358,7 +355,6 @@ def translate_text(chat, text):
                 "text": text,
             }
         )
-        
         msg = result.content
         print('translated text: ', msg)
     except Exception:
@@ -682,6 +678,9 @@ def getResponse(connectionId, jsonBody):
                     msg = general_conversation(connectionId, requestId, chat, text)   
                 else:
                     msg = general_conversation(connectionId, requestId, chat, text)  
+                    
+                memory_chain.chat_memory.add_user_message(text)
+                memory_chain.chat_memory.add_ai_message(msg)
                                         
         elif type == 'document':
             isTyping(connectionId, requestId)
@@ -747,11 +746,7 @@ def getResponse(connectionId, jsonBody):
             raise Exception ("Not able to write into dynamodb")               
         #print('resp, ', resp)
 
-    return {
-        'statusCode': 200,
-        'request_id': requestId,
-        'msg': msg,
-    }
+    return msg
 
 def lambda_handler(event, context):
     # print('event: ', event)    
