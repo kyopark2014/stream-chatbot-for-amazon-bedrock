@@ -707,7 +707,7 @@ def getResponse(connectionId, jsonBody):
                 elif convType == "extraction": # infomation extraction
                     msg = extract_information(chat, text)  
                 elif convType == "pii":
-                    msg = extract_pii(chat, text)   
+                    msg = remove_pii(chat, text)   
                 elif convType == "step-by-step":
                     msg = do_step_by_step(chat, text)  
                 elif convType == "timestamp-extraction":
