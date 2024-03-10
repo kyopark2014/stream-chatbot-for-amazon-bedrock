@@ -444,6 +444,29 @@ def translate_text(chat, text):
 
 ![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/c19829df-da6b-4582-b2af-082ba4ff9849)
 
+#### Extracted Topic and sentiment
+
+“식사 가성비 좋습니다. 위치가 좋고 스카이라운지 바베큐 / 야경 최곱니다. 아쉬웠던 점 · 지하주차장이 비좁습니다.. 호텔앞 교통이 너무 복잡해서 주변시설을 이용하기 어렵습니다. / 한강나가는 길 / 주변시설에 나가는 방법등.. 필요합니다.”를 입력하고 결과를 확인합니다.
+
+![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/e153b81d-996d-44e5-9c5e-40ab231aee82)
+
+#### Information extraction
+
+“John Park. Solutions Architect | WWCS Amazon Web Services Email: john@amazon.com Mobile: +82-10-1234-5555“로 입력후에 이메일이 추출되는지 확인합니다.
+
+#### PII(personally identifiable information) 삭제하기
+
+PII(Personal Identification Information)의 삭제의 예는 아래와 같습니다. "John Park, Ph.D. Solutions Architect | WWCS Amazon Web Services Email: john@amazon.com Mobile: +82-10-1234-4567"와 같이 입력하여 name, phone number, address를 삭제한 텍스트를 얻습니다. 프롬프트는 PII를 참조합니다.
+
+#### 복잡한 질문 (step-by-step)
+
+"I have two pet cats. One of them is missing a leg. The other one has a normal number of legs for a cat to have. In total, how many legs do my cats have?"를 입력하고 결과를 확인합니다.
+
+#### 날짜/시간 추출하기
+
+메뉴에서 "Timestamp Extraction"을 선택하고, "지금은 2023년 12월 5일 18시 26분이야"라고 입력하면 prompt를 이용해 아래처럼 시간을 추출합니다.
+
+
 
 
 ## 리소스 정리하기 
