@@ -595,17 +595,7 @@ def extract_timestamp(chat, text):
             </result>
 
             결과에 개행문자인 "\n"과 글자 수와 같은 부가정보는 절대 포함하지 마세요."""
-        )
-    else: 
-        system = (
-            """Using the following conversation, answer friendly for the newest question. If you don't know the answer, just say that you don't know, don't try to make up an answer. You will be acting as a thoughtful advisor. 
-            
-            {input}
-
-            Assistant: Can I think step by step?
-
-            Human: Yes, please do."""
-        )
+        )    
         
     human = "<text>{text}</text>"
     
