@@ -615,16 +615,104 @@ def remove_pii(chat, text):
 
 "I have two pet cats. One of them is missing a leg. The other one has a normal number of legs for a cat to have. In total, how many legs do my cats have?"를 입력하고 결과를 확인합니다.
 
-```python
+![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/acf071bb-21f2-4677-bf88-28ba09f95012)
 
+```python
+def do_step_by_step(chat, text):
+    if isKorean(text)==True:
+        system = (
+            """다음은 Human과 Assistant의 친근한 대화입니다. Assistant은 상황에 맞는 구체적인 세부 정보를 충분히 제공합니다. 아래 문맥(context)을 참조했음에도 답을 알 수 없다면, 솔직히 모른다고 말합니다. 여기서 Assistant의 이름은 서연입니다.
+
+            Assistant: 단계별로 생각할까요?
+
+            Human: 예, 그렇게하세요."""
+        )
+    else: 
+        system = (
+            """Using the following conversation, answer friendly for the newest question. If you don't know the answer, just say that you don't know, don't try to make up an answer. You will be acting as a thoughtful advisor. 
+            
+            Assistant: Can I think step by step?
+
+            Human: Yes, please do."""
+        )
+        
+    human = "<text>{text}</text>"
+    
+    prompt = ChatPromptTemplate.from_messages([("system", system), ("human", human)])
+    print('prompt: ', prompt)
+    
+    chain = prompt | chat    
+    try: 
+        result = chain.invoke(
+            {
+                "text": text
+            }
+        )        
+        msg = result.content        
+        
+        print('result of sentiment extraction: ', msg)
+    except Exception:
+        err_msg = traceback.format_exc()
+        print('error message: ', err_msg)                    
+        raise Exception ("Not able to request to LLM")
+    
+    return msg
 ```
 
 #### 날짜/시간 추출하기
 
 메뉴에서 "Timestamp Extraction"을 선택하고, "지금은 2023년 12월 5일 18시 26분이야"라고 입력하면 prompt를 이용해 아래처럼 시간을 추출합니다.
 
-```python
+![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/9c50358f-6f25-4211-b261-a03d60d08104)
 
+```python
+def extract_timestamp(chat, text):
+    system = (
+        """Human: 아래의 <text>는 시간을 포함한 텍스트입니다. 친절한 AI Assistant로서 시간을 추출하여 아래를 참조하여 <example>과 같이 정리해주세요.
+            
+        - 년도를 추출해서 <year>/<year>로 넣을것 
+        - 월을 추출해서 <month>/<month>로 넣을것
+        - 일을 추출해서 <day>/<day>로 넣을것
+        - 시간을 추출해서 24H으로 정리해서 <hour>/<hour>에 넣을것
+        - 분을 추출해서 <minute>/<minute>로 넣을것
+
+        이때의 예제는 아래와 같습니다.
+        <example>
+        2022년 11월 3일 18시 26분
+        </example>
+        <result>
+            <year>2022</year>
+            <month>11</month>
+            <day>03</day>
+            <hour>18</hour>
+            <minute>26</minute>
+        </result>
+
+        결과에 개행문자인 "\n"과 글자 수와 같은 부가정보는 절대 포함하지 마세요."""
+    )    
+        
+    human = "<text>{text}</text>"
+    
+    prompt = ChatPromptTemplate.from_messages([("system", system), ("human", human)])
+    print('prompt: ', prompt)
+    
+    chain = prompt | chat    
+    try: 
+        result = chain.invoke(
+            {
+                "text": text
+            }
+        )        
+        output = result.content        
+        msg = output[output.find('<result>')+8:len(output)-9] # remove <result> 
+        
+        print('result of sentiment extraction: ', msg)
+    except Exception:
+        err_msg = traceback.format_exc()
+        print('error message: ', err_msg)                    
+        raise Exception ("Not able to request to LLM")
+    
+    return msg
 ```
 
 
