@@ -415,6 +415,8 @@ def translate_text(chat, text):
 
 ### 실행결과
 
+#### 일반적인 대화
+
 "서울을 여행하고 싶어. 무엇을 타고 여행하는것이 좋을까?"라고 입력하면 서울의 정보를 알려줍니다.
 
 ![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/ec1940d6-3629-453b-87c9-680e30c72dbb)
@@ -427,6 +429,21 @@ def translate_text(chat, text):
 '서울'과 '지하철'이라는 단어를 넣지 않고 "그럼 환승도 가능해?"로 물었을때 아래와 같이 이전 대화 이력(chat history)을 이용하여 서울 지하철의 환승에 대해 설명하여 줍니다.
 
 ![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/8fadc6e1-503e-4fba-9a73-a48f04ca923a)
+
+
+#### 번역하기 
+
+"아마존 베드락을 이용해 주셔서 감사합니다. 편안한 대화를 즐기실 수 있으며, 파일을 업로드하시면 요약해 드릴 수 있습니다."로 입력하면 아래와 같은 변억 결과를 얻을 수 있습니다.
+
+![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/9ccb1b97-3cb6-4026-af88-1a8e4e386951)
+
+
+#### 문법 확인하기
+
+"Thank you using Amazon Bedrock. You can enjoy aa comfortable convarsation, and if you upload a file, I can summarize it for you."을 넣으면 아래와 같이 잘못된 부분을 알려주고 수정하여 줍니다.
+
+![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/c19829df-da6b-4582-b2af-082ba4ff9849)
+
 
 
 ## 리소스 정리하기 
