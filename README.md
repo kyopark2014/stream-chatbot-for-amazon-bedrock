@@ -576,7 +576,7 @@ PII(Personal Identification Information)의 삭제의 예는 아래와 같습니
 ![image](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/assets/52392004/0b678b6b-0fd7-470f-ba84-736eca58e10d)
 
 ```python
-def extract_pii(chat, text):
+def remove_pii(chat, text):
     if isKorean(text)==True:
         system = (
             """아래의 <text>에서 개인식별정보(PII)를 모두 제거하여 외부 계약자와 안전하게 공유할 수 있도록 합니다. 이름, 전화번호, 주소, 이메일을 XXX로 대체합니다. 또한 결과는 <result> tag를 붙여주세요."""
