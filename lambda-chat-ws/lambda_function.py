@@ -775,8 +775,9 @@ def lambda_handler(event, context):
                 requestId  = jsonBody['request_id']
                 try:
                     msg = getResponse(connectionId, jsonBody)
-
-                    print('msg: ', msg)
+                    # print('msg: ', msg)
+                    
+                    sendMessage(connectionId, msg)
                                         
                 except Exception:
                     err_msg = traceback.format_exc()
