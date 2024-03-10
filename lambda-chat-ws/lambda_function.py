@@ -414,11 +414,7 @@ def getResponse(connectionId, jsonBody):
                 print('initiate the chat memory!')
                 msg  = "The chat memory was intialized in this session."
             else:            
-                if conversationMode == 'true':
-                    msg = general_conversation(connectionId, requestId, chat, text)    
-                else:
-                    msg = llm(HUMAN_PROMPT+text+AI_PROMPT)
-            #print('msg: ', msg)
+                msg = general_conversation(connectionId, requestId, chat, text)    
                 
         elif type == 'document':
             isTyping(connectionId, requestId)
