@@ -359,6 +359,47 @@ const wss_url = `wss://${WebSocketapi.attrApiId}.execute-api.${region}.amazonaws
 const connection_url = `https://${WebSocketapi.attrApiId}.execute-api.${region}.amazonaws.com/${stage}`;
 ```
 
+## Prompt Engineering
+
+### 번역하기
+
+ChatPromptTemplate을 이용하여 번역시 입력/출력 언어를 지정합니다. 번역된 결과만을 얻기 위하여 <result> tag를 요청하고 결과에서는 해당 tag를 제거합니다.
+
+```python
+def translate_text(chat, text):
+    system = (
+        "You are a helpful assistant that translates {input_language} to {output_language} in <article> tags. Put it in <result> tags."
+    )
+    human = "<article>{text}</article>"
+    
+    prompt = ChatPromptTemplate.from_messages([("system", system), ("human", human)])
+    
+    if isKorean(text)==False :
+        input_language = "English"
+        output_language = "Korean"
+    else:
+        input_language = "Korean"
+        output_language = "English"
+                        
+    chain = prompt | chat    
+    try: 
+        result = chain.invoke(
+            {
+                "input_language": input_language,
+                "output_language": output_language,
+                "text": text,
+            }
+        )
+        msg = result.content
+    except Exception:
+        err_msg = traceback.format_exc()
+        print('error message: ', err_msg)                    
+        raise Exception ("Not able to request to LLM")
+
+    return msg[msg.find('<result>')+8:len(msg)-9] # remove <result> tag
+```
+
+
 
 ## 직접 실습 해보기
 
