@@ -37,52 +37,56 @@ connection_url = os.environ.get('connection_url')
 client = boto3.client('apigatewaymanagementapi', endpoint_url=connection_url)
 print('connection_url: ', connection_url)
 
-# bedrock   
-boto3_bedrock = boto3.client(
-    service_name='bedrock-runtime',
-    region_name=bedrock_region,
-    config=Config(
-        retries = {
-            'max_attempts': 30
-        }            
+def initiate_chat():
+    # bedrock   
+    boto3_bedrock = boto3.client(
+        service_name='bedrock-runtime',
+        region_name=bedrock_region,
+        config=Config(
+            retries = {
+                'max_attempts': 30
+            }            
+        )
     )
-)
 
-HUMAN_PROMPT = "\n\nHuman:"
-AI_PROMPT = "\n\nAssistant:"
-def get_parameter(modelId):
-    if modelId == 'amazon.titan-tg1-large' or modelId == 'amazon.titan-tg1-xlarge': 
-        return {
-            "maxTokenCount":1024,
-            "stopSequences":[],
-            "temperature":0,
-            "topP":0.9
-        }
-    elif modelId[:9] == 'anthropic':
-        return {
-            "max_tokens":1024,
-            "temperature":0.1,
-            "top_k":250,
-            "top_p": 0.9,
-            "stop_sequences": [HUMAN_PROMPT]            
-        }
-parameters = get_parameter(modelId)
+    HUMAN_PROMPT = "\n\nHuman:"
+    AI_PROMPT = "\n\nAssistant:"
+    def get_parameter(modelId):
+        if modelId == 'amazon.titan-tg1-large' or modelId == 'amazon.titan-tg1-xlarge': 
+            return {
+                "maxTokenCount":1024,
+                "stopSequences":[],
+                "temperature":0,
+                "topP":0.9
+            }
+        elif modelId[:9] == 'anthropic':
+            return {
+                "max_tokens":1024,
+                "temperature":0.1,
+                "top_k":250,
+                "top_p": 0.9,
+                "stop_sequences": [HUMAN_PROMPT]            
+            }
+    parameters = get_parameter(modelId)
 
-"""
-chat = BedrockChat(
-    model_id=modelId,
-    client=boto3_bedrock, 
-    streaming=True,
-    callbacks=[StreamingStdOutCallbackHandler()],
-    model_kwargs=parameters,
-)  
-"""
+    """
+    chat = BedrockChat(
+        model_id=modelId,
+        client=boto3_bedrock, 
+        streaming=True,
+        callbacks=[StreamingStdOutCallbackHandler()],
+        model_kwargs=parameters,
+    )  
+    """
 
-chat = ChatBedrock(
-    model_id=modelId,
-    client=boto3_bedrock, 
-    model_kwargs=parameters,
-)
+    chat = ChatBedrock(   # new chat model
+        model_id=modelId,
+        client=boto3_bedrock, 
+        model_kwargs=parameters,
+    )    
+    return chat
+
+chat = initiate_chat()
 
 map_chain = dict() 
 MSG_LENGTH = 100
@@ -265,7 +269,7 @@ def general_conversation(connectionId, requestId, chat, query):
             }
         )
         msg = readStreamMsg(connectionId, requestId, stream.content)    
-                            
+        print('strema output: ', stream)
         msg = stream.content
         print('msg: ', msg)
     except Exception:
