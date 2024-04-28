@@ -270,8 +270,13 @@ def general_conversation(connectionId, requestId, chat, query):
         )
         msg = readStreamMsg(connectionId, requestId, stream.content)    
         print('strema output: ', stream)
+        
+        usage = stream.response_metadata['usage']
+        print('prompt_tokens: ', usage['prompt_tokens'])
+        print('completion_tokens: ', usage['completion_tokens'])
+        print('total_tokens: ', usage['total_tokens'])        
         msg = stream.content
-        print('msg: ', msg)
+
     except Exception:
         err_msg = traceback.format_exc()
         print('error message: ', err_msg)        
