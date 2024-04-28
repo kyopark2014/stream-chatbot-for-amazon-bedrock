@@ -13,13 +13,14 @@ import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2';
 
 const region = process.env.CDK_DEFAULT_REGION;    
+const accountId = process.env.CDK_DEFAULT_ACCOUNT;
 const debug = false;
 const stage = 'dev';
 const s3_prefix = 'docs';
 const model_id = "anthropic.claude-3-sonnet-20240229-v1:0"; // amazon.titan-tg1-large, amazon.titan-tg1-xlarge, anthropic.claude-v1, anthropic.claude-v2, anthropic.claude-instant-v1 anthropic.claude-3-sonnet-20240229-v1:0
 const projectName = `stream-chatbot`; 
 
-const bucketName = `storage-for-${projectName}-${region}`; 
+const bucketName = `storage-for-${projectName}-${accountId}-${region}`; 
 const bedrock_region = "us-east-1";  // "us-east-1" "us-west-2" 
 
 export class CdkStreamChatbotStack extends cdk.Stack {
@@ -28,7 +29,7 @@ export class CdkStreamChatbotStack extends cdk.Stack {
 
     // s3 
     const s3Bucket = new s3.Bucket(this, `storage-${projectName}`,{
-      //bucketName: bucketName,
+      bucketName: bucketName,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
