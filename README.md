@@ -105,7 +105,7 @@ boto3_bedrock = boto3.client(
 )
 ```
 
-아래와 같이 LLM에서 어플리케이션을 편리하게 만드는 프레임워크인 [LangChain](https://docs.langchain.com/docs/)을 사용하여 [Bedrock Chat](https://python.langchain.com/docs/integrations/chat/bedrock)을 정의합니다. 이때 stream으로 출력을 보여줄 수 있도록 streaming을 True로 설정합니다. 또한 [StreamingStdOutCallbackHandler](https://api.python.langchain.com/en/latest/callbacks/langchain.callbacks.streaming_stdout.StreamingStdOutCallbackHandler.html)을 callback으로 등록합니다.
+아래와 같이 LLM에서 어플리케이션을 편리하게 만드는 프레임워크인 [LangChain](https://docs.langchain.com/docs/)을 사용하여 [ChatBedrock](https://python.langchain.com/docs/integrations/chat/bedrock/)을 정의합니다. 이때 stream으로 출력을 보여줄 수 있도록 streaming을 True로 설정합니다. 또한 [StreamingStdOutCallbackHandler](https://api.python.langchain.com/en/latest/callbacks/langchain.callbacks.streaming_stdout.StreamingStdOutCallbackHandler.html)을 callback으로 등록합니다.
 
 ```python
 from langchain_community.chat_models import BedrockChat
