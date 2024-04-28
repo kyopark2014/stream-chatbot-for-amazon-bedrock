@@ -105,28 +105,20 @@ boto3_bedrock = boto3.client(
 )
 ```
 
-아래와 같이 LLM에서 어플리케이션을 편리하게 만드는 프레임워크인 [LangChain](https://docs.langchain.com/docs/)을 사용하여 [ChatBedrock](https://python.langchain.com/docs/integrations/chat/bedrock/)을 정의합니다. 이때 stream으로 출력을 보여줄 수 있도록 streaming을 True로 설정합니다. 또한 [StreamingStdOutCallbackHandler](https://api.python.langchain.com/en/latest/callbacks/langchain.callbacks.streaming_stdout.StreamingStdOutCallbackHandler.html)을 callback으로 등록합니다.
+아래와 같이 LLM에서 어플리케이션을 편리하게 만드는 프레임워크인 [LangChain](https://docs.langchain.com/docs/)을 사용하여 [ChatBedrock](https://python.langchain.com/docs/integrations/chat/bedrock/)을 정의합니다. 
 
 ```python
-from langchain_community.chat_models import BedrockChat
-from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-
-chat = BedrockChat(
-    model_id=modelId,
-    client=boto3_bedrock, 
-    streaming=True,
-    callbacks=[StreamingStdOutCallbackHandler()],
-    model_kwargs=parameters,
-)  
+chat = ChatBedrock(   
+        model_id=modelId,
+        client=boto3_bedrock, 
+        model_kwargs=parameters,
+)    
 ```
 
 사용자가 WebSocket을 이용하여 API Gateway로 보낸 메시지가 [lambda-chat-ws](https://github.com/kyopark2014/stream-chatbot-for-amazon-bedrock/blob/main/lambda-chat-ws/lambda_function.py)에 전달되면, 아래와 같이 event에서 connectionId와 routeKey를 추출할 수 있습니다. routeKey가 "default"일때 사용자게 보낸 메시지가 들어오는데 여기서 'body"를 추출하여, json포맷의 데이터에서 사용자의 입력인 'text'를 추출합니다. 이후 아래와 같이 conversation.predict()을 이용하여 LLM에 답변을 요청합니다. 
 
 ```python
 def general_conversation(connectionId, requestId, chat, query):
-    global time_for_inference, history_length, token_counter_history    
-    time_for_inference = history_length = token_counter_history = 0
-    
     if isKorean(query)==True :
         system = (
             "다음의 Human과 Assistant의 친근한 이전 대화입니다. Assistant은 상황에 맞는 구체적인 세부 정보를 충분히 제공합니다. Assistant의 이름은 서연이고, 모르는 질문을 받으면 솔직히 모른다고 말합니다."
